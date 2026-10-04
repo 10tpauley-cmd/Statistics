@@ -36,7 +36,8 @@ The Pathway is the guided journey through the entire course: a long, scrollable 
 - **Optional side encounters**: shrines, scholars, lost formulas, labs, random encounters and treasure.
 - **Recurring cast**: a small set of mentors with short lines that support the lesson.
 - **Stars** are tied to first-try accuracy and hints. Replays use fresh problems and pay XP only for newly earned stars.
-- **Mastery walls** hold the next region until the current one is genuinely mastered, with targeted reviews to get there.
+- **Mastery walls** hold the next region until the current one is genuinely mastered, with targeted reviews to get there. Once crossed, a wall stays open even if mastery later decays (spaced review takes care of that).
+- **Leave any time**: a level resumes where you left it with its score so far, and going Back shows answered steps as they were (no double XP).
 - **Spaced-repetition reviews** appear as 🔄 markers beside the levels that taught them.
 - **After each level**, a quick review is suggested if a concept went badly.
 - **Navigation**: the map opens at your current level, with jump-to-current, region chips, keyboard shortcuts (C, [, ]), drag-to-scroll and a welcome-back card.

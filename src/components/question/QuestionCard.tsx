@@ -14,6 +14,7 @@ import { progressiveHints } from './hints';
 import { FrqFeedbackView } from './FrqFeedbackView';
 import { gradeFrq, aiAvailable, type FrqResult } from '../../lib/frqService';
 import { playSound } from '../../lib/sound';
+import * as fx from '../../lib/fx';
 import { Calculator } from '../calculator/Calculator';
 
 export interface QuestionOutcome {
@@ -81,12 +82,16 @@ function NumInput({ value, onChange, onSubmit, disabled, unit, autoFocus }: { va
 
 function PartRunner({ part, index, active, done, onGraded }: { part: QuestionPart; index: number; active: boolean; done?: GradeResult; onGraded: (r: GradeResult) => void }) {
   const [v, setV] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
   const submit = () => {
     if (!v) return;
-    onGraded(gradeObjective(part.answer, v));
+    const r = gradeObjective(part.answer, v);
+    if (r.correct) { fx.burst(ref.current?.querySelector('.btn.primary') ?? ref.current, { count: 10, spread: 70 }); fx.sound('select'); }
+    else fx.shake(ref.current);
+    onGraded(r);
   };
   return (
-    <div className={`part ${done ? (done.correct ? 'done' : '') : active ? '' : 'locked'}`}>
+    <div ref={ref} className={`part ${done ? (done.correct ? 'done' : '') : active ? '' : 'locked'}`}>
       <div className="part-label">Step {index + 1} · {part.label}</div>
       <Rich text={part.prompt} />
       {(active || done) && (
@@ -126,6 +131,7 @@ export function QuestionCard({ question: q, mode, scaffold = false, exam = false
   const [calcOpen, setCalcOpen] = useState(false);
   const [anim, setAnim] = useState('');
   const start = useRef(Date.now());
+  const cardRef = useRef<HTMLDivElement>(null);
   const hints = useMemo(() => progressiveHints(q), [q]);
   const usingParts = scaffold && !!q.parts?.length && !exam;
   const concept = CONCEPT_BY_ID[q.concept];
@@ -150,13 +156,17 @@ export function QuestionCard({ question: q, mode, scaffold = false, exam = false
     if (record) {
       answerQuestion({ question: q, correct: r.correct, partial: r.score, hintsUsed: hintsShown, ms, mode, misconception: r.misconception, yourAnswer: r.yourAnswer, correctAnswer: r.correctAnswer, why: r.why });
     }
-    setXpGain(getState().xp - before);
+    const gained = getState().xp - before;
+    setXpGain(gained);
     if (!exam) {
       const snd = getState().settings.sound;
+      const focused = document.activeElement instanceof HTMLElement && cardRef.current?.contains(document.activeElement) ? document.activeElement : null;
+      const anchor = focused ?? cardRef.current?.querySelector('.q-actions') ?? cardRef.current;
       if (r.correct) {
         const p = praise(q, hintsShown, ms);
         setPraiseTitle(p.title);
         playSound(p.perfect ? 'perfect' : 'correct', snd);
+        fx.correct(anchor, { xp: gained, perfect: p.perfect });
         setAnim('pop');
         if (p.perfect) {
           emit({ kind: 'celebrate', strength: 'small', title: 'Perfect solve', body: 'Right method, right calculation, no hints.' });
@@ -164,6 +174,7 @@ export function QuestionCard({ question: q, mode, scaffold = false, exam = false
         }
       } else {
         playSound('wrong', snd);
+        fx.wrong(null);
         setAnim('shake');
         const mis = r.misconception ? MISCONCEPTION_BY_ID[r.misconception] : undefined;
         if (mis && Math.random() < 0.6) emit({ kind: 'mascot', mood: 'encourage', text: `Common trap: ${mis.title.toLowerCase()}. ${plain(mis.fix).split('. ')[0]}.` });
@@ -214,6 +225,8 @@ export function QuestionCard({ question: q, mode, scaffold = false, exam = false
       answerQuestion({ question: { ...q, id: `${q.id}~i`, type: 'interpretation', dims: ['interpret'], hints: [] }, correct: r.correct, hintsUsed: 0, ms: 5000, mode, misconception: r.misconception, yourAnswer: r.yourAnswer, correctAnswer: r.correctAnswer, why: r.message });
     }
     playSound(r.correct ? 'correct' : 'wrong', getState().settings.sound);
+    if (r.correct) fx.correct(cardRef.current?.querySelector('.part .btn.primary') ?? cardRef.current, {});
+    else fx.wrong(null);
   };
 
   const outcome = (): QuestionOutcome => {
@@ -254,7 +267,7 @@ export function QuestionCard({ question: q, mode, scaffold = false, exam = false
   const bookmarked = isBookmarked(s, 'question', q.id);
 
   return (
-    <div className={`q-card ${anim}`} key={q.id}>
+    <div className={`q-card ${anim}`} key={q.id} ref={cardRef}>
       <div className="q-head">
         {!compactHeader && <span className="chip primary">{concept.title}</span>}
         {!exam && <span className="chip" title={LEVEL_NAMES[q.level]}>Level {q.level} · {LEVEL_NAMES[q.level]}</span>}

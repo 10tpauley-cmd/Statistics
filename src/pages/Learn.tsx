@@ -20,7 +20,8 @@ export function LearnPage() {
         </div>
         <div className="row wrap">
           <LinkBtn to="/map" className="btn"><Icon name="map" size={16} /> Concept map</LinkBtn>
-          {s.placement !== 'done' && <LinkBtn to="/placement" className="btn primary"><Icon name="target" size={16} /> Placement test</LinkBtn>}
+          <LinkBtn to="/pathway" className="btn primary"><Icon name="map" size={16} /> Guided: The Pathway</LinkBtn>
+          {s.placement !== 'done' && <LinkBtn to="/placement" className="btn"><Icon name="target" size={16} /> Placement test</LinkBtn>}
         </div>
       </div>
 

@@ -6,6 +6,8 @@ import { CONCEPTS } from '../content/concepts';
 import { UNITS } from '../content/units';
 import { MISCONCEPTION_BY_ID } from '../content/misconceptions';
 import { useMasteryMap } from '../components/hooks';
+import { PATHWAY } from '../content/pathway';
+import { journeyStats } from '../engine/pathway/progress';
 import { BarChart, LineChart } from '../components/charts/Charts';
 import { Bar, Ring, fmtDuration, masteryColor, Empty, LinkBtn } from '../components/ui';
 
@@ -53,6 +55,24 @@ export function ProgressPage() {
         <div className="card pad-sm stat-card"><div className="k">Study time</div><div className="v">{fmtDuration(totalMs)}</div><div className="tiny muted">{Object.values(s.daily).filter((d) => d.ms > 0).length} active days</div></div>
         <div className="card pad-sm stat-card"><div className="k">Streak · Level</div><div className="v">🔥 {liveStreak(s)} · Lv {levelFromXp(s.xp)}</div><div className="tiny muted">best streak {s.streak.best} · {s.xp} XP</div></div>
       </div>
+
+      {(() => {
+        const st = journeyStats(s, PATHWAY);
+        return (
+          <div className="card mt">
+            <div className="card-title"><h3>🗺️ The Pathway</h3><a href="#/pathway" className="small">Open the map →</a></div>
+            <Bar value={st.pct} label="Journey progress" />
+            <div className="metric-row">
+              <div className="metric"><div className="k">Levels</div><div className="v">{st.levelsDone}/{st.levelCount}</div></div>
+              <div className="metric"><div className="k">Regions</div><div className="v">{st.regionsDone}/{st.regionCount}</div></div>
+              <div className="metric"><div className="k">Mini-bosses</div><div className="v">{st.minisDone}/{st.miniCount}</div></div>
+              <div className="metric"><div className="k">Bosses</div><div className="v">{st.bossesDefeated}/{st.bossCount}</div></div>
+              <div className="metric"><div className="k">Stars</div><div className="v">★ {st.stars}/{st.maxStars}</div></div>
+              <div className="metric"><div className="k">Encounters</div><div className="v">{st.encountersDone}/{st.encounterCount}</div></div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="grid grid-2 mt">
         <div className="card">

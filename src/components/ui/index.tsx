@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import type { Source } from '../../engine/types';
 import { Icon } from './Icon';
 import { href } from '../../lib/router';
@@ -68,6 +68,7 @@ export function Empty({ icon = '🌱', title, children, action }: { icon?: strin
 
 export function Modal({ open, onClose, title, children, wide = false }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
+  const titleId = useId();
   useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
@@ -82,9 +83,9 @@ export function Modal({ open, onClose, title, children, wide = false }: { open: 
   if (!open) return null;
   return (
     <div className="modal-scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" ref={ref}>
+      <div className={`modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} ref={ref}>
         <div className="modal-head">
-          <h3 style={{ margin: 0 }}>{title}</h3>
+          <h3 style={{ margin: 0 }} id={titleId}>{title}</h3>
           <button className="btn ghost icon sm" onClick={onClose} aria-label="Close"><Icon name="x" /></button>
         </div>
         <div className="modal-body">{children}</div>

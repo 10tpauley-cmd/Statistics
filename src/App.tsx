@@ -1,4 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
+import * as fx from './lib/fx';
+import { subscribe, getState } from './state/store';
 import { useLocation, matchPath } from './lib/router';
 import { useLearner } from './state/store';
 import { setTutorFocus } from './state/tutor';
@@ -26,6 +28,8 @@ import { MistakesPage } from './pages/Mistakes';
 import { SavedPage } from './pages/Saved';
 import { ProgressPage } from './pages/Progress';
 import { SettingsPage } from './pages/Settings';
+import { PathwayPage } from './pages/pathway/PathwayPage';
+import { PlayPage, QuickReviewPage, PathwayCompletePage } from './pages/pathway/PathwayRoutes';
 import { Empty, LinkBtn } from './components/ui';
 
 interface Route {
@@ -36,6 +40,10 @@ interface Route {
 
 const ROUTES: Route[] = [
   { pattern: '/', name: 'Dashboard', render: () => <Dashboard /> },
+  { pattern: '/pathway', name: 'The Pathway', render: () => <PathwayPage /> },
+  { pattern: '/pathway/play/:id', name: 'The Pathway', render: (p, _q, k) => <PlayPage key={k} id={p.id} /> },
+  { pattern: '/pathway/review/:concept', name: 'Quick review', render: (p, q, k) => <QuickReviewPage key={k} concept={p.concept} query={q} /> },
+  { pattern: '/pathway/complete', name: 'Journey complete', render: () => <PathwayCompletePage /> },
   { pattern: '/learn', name: 'Course path', render: () => <LearnPage /> },
   { pattern: '/learn/:id', name: 'Lesson', render: (p) => (CONCEPT_BY_ID[p.id as ConceptId] ? <ConceptPage key={p.id} id={p.id as ConceptId} /> : <NotFound />) },
   { pattern: '/practice', name: 'Practice', render: (_p, q, k) => <PracticePage key={k} query={q} /> },
@@ -104,10 +112,33 @@ function useStudyHeartbeat() {
   }, []);
 }
 
+/** Press feedback on every control, and a pulse on the XP pill whenever XP is earned. */
+function useGlobalFx() {
+  useEffect(() => {
+    const off = fx.installClickFx();
+    let xp = getState().xp;
+    let streak = getState().streak.current;
+    const unsub = subscribe(() => {
+      const st = getState();
+      if (st.xp > xp) fx.pulse(document.querySelector('[data-xp-pill]'));
+      if (st.streak.current > streak && streak >= 0) {
+        const pill = document.querySelector('[data-streak-pill]');
+        fx.pulse(pill);
+        fx.burst(pill, { count: 10, glyphs: ['🔥'], spread: 60, size: 14 });
+        fx.float(pill, `🔥 ${st.streak.current}-day streak!`, 'gold');
+      }
+      xp = st.xp;
+      streak = st.streak.current;
+    });
+    return () => { off(); unsub(); };
+  }, []);
+}
+
 export function App() {
   const { path, query, href } = useLocation();
   useTheme();
   useStudyHeartbeat();
+  useGlobalFx();
   let page: ReactNode = <NotFound />;
   let name = 'Not found';
   for (const r of ROUTES) {

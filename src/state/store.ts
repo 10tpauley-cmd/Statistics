@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import type { LearnerState, Settings } from '../engine/types';
+import type { LearnerState, PathwayState, Settings } from '../engine/types';
 
 export const STORAGE_KEY = 'statlab.learner.v1';
 export const STATE_VERSION = 1;
@@ -15,7 +15,13 @@ export const DEFAULT_SETTINGS: Settings = {
   dailyGoal: 30,
   examDate: '',
   fontScale: 1,
+  effects: 'full',
+  haptics: true,
 };
+
+export function defaultPathway(): PathwayState {
+  return { levels: {}, battles: {}, encounters: {}, introsSeen: [], ceremonies: [], lastVisit: '', quickReviews: {} };
+}
 
 export function defaultState(now = Date.now()): LearnerState {
   return {
@@ -38,6 +44,7 @@ export function defaultState(now = Date.now()): LearnerState {
     exams: [],
     bosses: {},
     formulasTried: [],
+    pathway: defaultPathway(),
     settings: { ...DEFAULT_SETTINGS },
   };
 }
@@ -66,6 +73,7 @@ export function hydrate(raw: unknown): LearnerState {
     daily: r.daily ?? {},
     achievements: r.achievements ?? {},
     bosses: r.bosses ?? {},
+    pathway: { ...defaultPathway(), ...(r.pathway ?? {}) },
   };
 }
 

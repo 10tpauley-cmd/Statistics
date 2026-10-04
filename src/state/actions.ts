@@ -25,6 +25,15 @@ function announce(events: LearnerEvent[], s: LearnerState) {
   }
 }
 
+/** Public wrappers so other action modules (e.g. the Pathway) share the same event + achievement fan-out. */
+export function announceEvents(events: LearnerEvent[]) {
+  announce(events, getState());
+}
+
+export function checkAchievementsNow() {
+  checkAchievements();
+}
+
 export const LEVEL_NAMES: Record<number, string> = {
   1: 'Recognition', 2: 'Basic application', 3: 'Normal application', 4: 'Interpretation', 5: 'Mixed problems', 6: 'Exam-style', 7: 'Mastery',
 };
@@ -198,7 +207,7 @@ export function recordExam(rec: ExamRecord) {
   checkAchievements();
 }
 
-export function recordBoss(id: string, score: number) {
+export function recordBoss(id: string, score: number, opts: { quiet?: boolean } = {}) {
   const now = Date.now();
   const cleared = score >= 0.7;
   const prev = getState().bosses[id];
@@ -208,7 +217,7 @@ export function recordBoss(id: string, score: number) {
     const next = { ...s, bosses: { ...s.bosses, [id]: { best: Math.max(prev?.best ?? 0, score), t: now, cleared: prev?.cleared || cleared } } };
     return cleared && !prev?.cleared ? addXp(next, 150, 'boss', now, ev) : next;
   });
-  if (cleared && !prev?.cleared) emit({ kind: 'celebrate', strength: 'big', title: 'Boss defeated!', body: BOSS_BY_ID[id]?.title });
+  if (cleared && !prev?.cleared && !opts.quiet) emit({ kind: 'celebrate', strength: 'big', title: 'Boss defeated!', body: BOSS_BY_ID[id]?.title });
   announce(ev, getState());
   checkAchievements();
 }

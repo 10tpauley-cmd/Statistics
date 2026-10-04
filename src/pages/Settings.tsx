@@ -77,6 +77,8 @@ export function SettingsPage() {
         <div className="list">
           <Row title="Theme"><Seg options={[{ id: 'system', label: 'System' }, { id: 'light', label: 'Light' }, { id: 'dark', label: 'Dark' }]} value={st.theme} onChange={(v) => updateSettings({ theme: v })} label="Theme" /></Row>
           <Row title="Text size"><Seg options={[{ id: 0.9, label: 'S' }, { id: 1, label: 'M' }, { id: 1.1, label: 'L' }, { id: 1.2, label: 'XL' }]} value={st.fontScale} onChange={(v) => updateSettings({ fontScale: v })} label="Text size" /></Row>
+          <Row title="Effects" desc="Bursts, combos, ripples and celebrations when you click and answer."><Seg options={[{ id: 'full', label: 'Full' }, { id: 'subtle', label: 'Subtle' }, { id: 'off', label: 'Off' }]} value={st.effects} onChange={(v) => updateSettings({ effects: v })} label="Effects intensity" /></Row>
+          <Row title="Haptics" desc="Small vibrations on phones that support it."><Toggle checked={st.haptics} onChange={(v) => updateSettings({ haptics: v })} label="Haptics" /></Row>
           <Row title="Reduce motion" desc="Turns off confetti and animations."><Toggle checked={st.reducedMotion} onChange={(v) => updateSettings({ reducedMotion: v })} label="Reduce motion" /></Row>
           <Row title="Sound effects" desc="Soft tones for correct answers and milestones."><Toggle checked={st.sound} onChange={(v) => updateSettings({ sound: v })} label="Sound effects" /></Row>
         </div>

@@ -19,6 +19,34 @@ The production build is fully static, with relative paths and a hash router, so 
 
 `npm run build:single` inlines everything (scripts, styles, math fonts, icon) into a single `index.html` of about 2 MB. You can double-click it to open the app with no server or install. Progress is saved in that browser's local storage.
 
+## 🗺️ The Pathway (flagship)
+
+The Pathway is the guided journey through the entire course: a long, scrollable fantasy world map where every step is real statistics.
+
+- **Six regions** follow the course order, each themed to its topic:
+  - Hearthstone Village (sampling & data)
+  - the Histogram Highlands (describing data)
+  - the Starfall Observatory (regression)
+  - the Whispering Woods of Chance (probability)
+  - the Arena of Outcomes (random variables)
+  - the Grand Statistical Archive (cumulative finale)
+- **Varied levels** rather than one repeated quiz format: lesson, practice, lab, graph lab, experiment, recall, precision (common mistakes), challenge, mixed, review and Teach It. Each type has its own sequence (intro → hook → teach → discover → practice → apply → challenge → recall → complete).
+- **Mini-bosses** are placed automatically about every 8–10 levels.
+- **Unit bosses** are multi-phase battles (recognition → calculation → interpretation → application → final) with a health bar, shields and boss taunts. A **final boss** caps the journey, followed by a completion ceremony and certificate.
+- **Optional side encounters**: shrines, scholars, lost formulas, labs, random encounters and treasure.
+- **Recurring cast**: a small set of mentors with short lines that support the lesson.
+- **Stars** are tied to first-try accuracy and hints. Replays use fresh problems and pay XP only for newly earned stars.
+- **Mastery walls** hold the next region until the current one is genuinely mastered, with targeted reviews to get there.
+- **Spaced-repetition reviews** appear as 🔄 markers beside the levels that taught them.
+- **After each level**, a quick review is suggested if a concept went badly.
+- **Navigation**: the map opens at your current level, with jump-to-current, region chips, keyboard shortcuts (C, [, ]), drag-to-scroll and a welcome-back card.
+
+**One brain underneath:** Pathway progress lives in the same learner store. Every answer runs through the existing engine (mastery, mistake bank, spaced repetition, adaptive level, XP), and the dashboard and Progress page show journey progress. The world is generated from data in `src/content/pathway/*` (schema and rules in [`docs/PATHWAY.md`](docs/PATHWAY.md)); nothing is hard-coded in components.
+
+## ✨ Effects
+
+There are press ripples and soft ticks on every control, particle bursts and XP pop-ups on correct answers, combo streaks, star pops, unlock animations, boss hits and confetti for big moments. **Settings → Effects** switches between Full, Subtle and Off, plus **Haptics**. Reduced motion is respected automatically.
+
 ## What's inside
 
 | Area | What you get |

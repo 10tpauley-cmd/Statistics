@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react';
+import { PATHWAY } from '../content/pathway';
+import { computeView, journeyStats } from '../engine/pathway/progress';
+import { LEVEL_TYPE_META } from '../engine/pathway/build';
 import { useLearner } from '../state/store';
 import { setName, skipPlacement } from '../state/actions';
 import { navigate } from '../lib/router';
@@ -32,7 +35,7 @@ function Welcome() {
             </div>
             <div className="row wrap">
               <button className="btn white lg" onClick={() => { if (name.trim()) setName(name.trim()); navigate('/placement'); }}><Icon name="target" size={18} /> Find my level (10 min)</button>
-              <button className="btn lg" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.5)' }} onClick={() => { if (name.trim()) setName(name.trim()); skipPlacement(); navigate('/learn/pop-sample'); }}>Start from lesson 1</button>
+              <button className="btn lg" style={{ background: 'transparent', color: '#fff', borderColor: 'rgba(255,255,255,.5)' }} onClick={() => { if (name.trim()) setName(name.trim()); skipPlacement(); navigate('/pathway'); }}>Begin the Pathway</button>
             </div>
           </div>
           <div className="hide-sm" style={{ background: 'rgba(255,255,255,.12)', borderRadius: 24, padding: 10 }}><Mu mood="wave" size={120} /></div>
@@ -98,30 +101,14 @@ export function Dashboard() {
 
       <div className="dash-grid">
         <div className="stack" style={{ gap: 18 }}>
-          {/* Continue learning */}
-          {cont ? (
-            <div className="hero-card">
-              <div className="eyebrow">{cont.step > 0 ? 'Continue learning' : 'Up next'} · Unit {UNITS.find((u) => u.id === cont.concept.unit)!.number}</div>
-              <h2>{cont.concept.title}</h2>
-              <p style={{ margin: 0 }}>{cont.concept.short}</p>
-              <div className="hero-meta">
-                <span><Icon name="clock" size={14} /> ~{cont.minutesLeft} min left</span>
-                <span><Icon name="layers" size={14} /> Step {Math.min(cont.step + 1, cont.total)} of {cont.total}</span>
-                <span><Icon name="book" size={14} /> PDF p. {cont.concept.source.pages[0]}</span>
-              </div>
-              <Bar value={cont.step / cont.total} className="white" label="Lesson progress" />
-              <div className="row wrap mt">
-                <LinkBtn to={`/learn/${cont.id}`} className="btn white"><Icon name="play" size={16} /> {cont.step > 0 ? 'Resume lesson' : 'Start lesson'}</LinkBtn>
-                <LinkBtn to="/learn" className="btn ghost" title="See the full course path"><span style={{ color: '#fff' }}>Course path</span></LinkBtn>
-              </div>
-            </div>
-          ) : (
-            <div className="hero-card">
-              <div className="eyebrow">Every lesson complete</div>
-              <h2>Time to prove mastery</h2>
-              <p>You've worked through all {CONCEPTS.length} lessons. Mastery comes from evidence — exams, boss battles, and Teach It.</p>
-              <div className="row wrap mt"><LinkBtn to="/exam" className="btn white">Take the final mastery exam</LinkBtn></div>
-            </div>
+          {/* The Pathway — the guided journey */}
+          <PathwayHero />
+          {cont && cont.step > 0 && (
+            <a className="plan-item" href={`#/learn/${cont.id}`}>
+              <span className="plan-num"><Icon name="book" size={14} /></span>
+              <div style={{ flex: 1, minWidth: 0 }}><div className="bold small">Resume free study: {cont.concept.title}</div><div className="tiny muted">Step {Math.min(cont.step + 1, cont.total)} of {cont.total} · ~{cont.minutesLeft} min left</div></div>
+              <Icon name="right" size={16} />
+            </a>
           )}
 
           {/* Stats */}
@@ -143,6 +130,7 @@ export function Dashboard() {
             </div>
             <Bar value={goalPct} color={goalPct >= 1 ? 'var(--success-strong)' : undefined} label="Daily goal progress" />
             <div className="stack-sm mt">
+              <PathwayPlanItem />
               {plan.map((p, i) => (
                 <a key={p.id} className="plan-item" href={`#${p.route}`}>
                   <span className="plan-num">{i + 1}</span>
@@ -303,6 +291,56 @@ export function Dashboard() {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PathwayPlanItem() {
+  const s = useLearner();
+  const cur = useMemo(() => computeView(s, PATHWAY).current, [s]);
+  if (!cur) return null;
+  return (
+    <a className="plan-item" href={`#/pathway/play/${cur.id}`} style={{ borderColor: 'color-mix(in srgb, var(--primary) 40%, var(--border))' }}>
+      <span className="plan-num">🗺️</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="bold small">The Pathway: {cur.kind === 'level' ? `Level ${cur.number} — ${cur.title}` : cur.title}</div>
+        <div className="tiny muted">{cur.kind === 'level' ? `${LEVEL_TYPE_META[cur.type].label} · ${cur.concepts.map((c) => CONCEPT_BY_ID[c].title).join(', ')}` : 'Battle'} · <i>Your next step on the journey.</i></div>
+      </div>
+      <span className="chip">{cur.kind === 'level' ? `${cur.minutes} min` : '10 min'}</span>
+    </a>
+  );
+}
+
+function PathwayHero() {
+  const s = useLearner();
+  const view = useMemo(() => computeView(s, PATHWAY), [s]);
+  const st = journeyStats(s, PATHWAY);
+  const cur = view.current;
+  const region = PATHWAY.regions[cur ? cur.regionIndex : PATHWAY.regions.length - 1].spec;
+  const idx = cur ? PATHWAY.main.findIndex((n) => n.id === cur.id) : PATHWAY.main.length;
+  const ahead = PATHWAY.main.slice(Math.max(0, idx - 2), idx + 5);
+  const started = st.levelsDone > 0 || Object.keys(s.pathway.levels).length > 0;
+  return (
+    <div className="hero-card pw-dash-hero">
+      <div className="eyebrow">🗺️ The Pathway · Region {region.number} — {region.name}</div>
+      <h2>{cur ? (cur.kind === 'level' ? `Level ${cur.number}: ${cur.title}` : `${cur.kind === 'boss' ? 'Boss' : 'Mini-boss'}: ${cur.title}`) : s.pathway.completedAt ? 'Journey complete!' : 'Mastery wall ahead'}</h2>
+      <p style={{ margin: 0 }}>{cur?.kind === 'level' ? `${LEVEL_TYPE_META[cur.type].emoji} ${LEVEL_TYPE_META[cur.type].label} · ${LEVEL_TYPE_META[cur.type].blurb}` : cur ? 'A battle that tests everything before it.' : view.wall ? `Raise ${view.wall.region.spec.name} mastery to ${Math.round(0.5 * 100)}% to continue.` : 'You crossed every region.'}</p>
+      <div className="pw-dash-strip" aria-hidden="true">
+        {ahead.map((n) => {
+          const stt = view.states[n.id];
+          return <span key={n.id} className={`pw-dash-dot ${stt} kind-${n.kind} ${cur?.id === n.id ? 'cur' : ''}`} title={n.title}>{n.kind === 'boss' || n.kind === 'mini-boss' ? n.emoji : stt === 'completed' || stt === 'mastered' ? '✓' : n.kind === 'level' ? n.number : ''}</span>;
+        })}
+      </div>
+      <div className="hero-meta">
+        <span>{st.levelsDone} / {st.levelCount} levels</span>
+        <span>{st.bossesDefeated} / {st.bossCount} bosses</span>
+        <span>★ {st.stars}</span>
+      </div>
+      <Bar value={st.pct} className="white" label="Journey progress" />
+      <div className="row wrap mt">
+        {cur ? <LinkBtn to={`/pathway/play/${cur.id}`} className="btn white"><Icon name="play" size={16} /> {started ? 'Continue Pathway' : 'Begin the Pathway'}</LinkBtn> : null}
+        <LinkBtn to="/pathway" className="btn ghost"><span style={{ color: '#fff' }}>Open the map</span></LinkBtn>
       </div>
     </div>
   );

@@ -322,7 +322,7 @@ export interface MistakeEntry {
 
 export type StudyMode =
   | 'lesson' | 'practice' | 'review' | 'mixed' | 'method' | 'mistakes' | 'exam' | 'final'
-  | 'placement' | 'boss' | 'quick' | 'teach' | 'recall' | 'graph' | 'formula';
+  | 'placement' | 'boss' | 'quick' | 'teach' | 'recall' | 'graph' | 'formula' | 'pathway';
 
 export interface SessionRecord {
   id: string;
@@ -405,6 +405,29 @@ export interface Settings {
   dailyGoal: number; // minutes
   examDate: string; // yyyy-mm-dd or ''
   fontScale: number;
+  effects: 'full' | 'subtle' | 'off'; // celebratory visual effects
+  haptics: boolean; // vibration on supported devices
+}
+
+/* ---------------- Pathway progress (lives inside the same learner state) ---------------- */
+
+export interface PathwayLevelRecord {
+  stars: number; // best stars earned (0–3)
+  best: number; // best accuracy 0..1
+  plays: number;
+  completedAt?: number;
+  step?: number; // resume point while in progress
+}
+
+export interface PathwayState {
+  levels: Record<string, PathwayLevelRecord>;
+  battles: Record<string, { best: number; passed: boolean; t: number; plays: number }>;
+  encounters: Record<string, number>;
+  introsSeen: string[];
+  ceremonies: string[];
+  lastVisit: string; // day key of the last Pathway visit
+  quickReviews: Record<string, number>; // concept → last quick review time
+  completedAt?: number;
 }
 
 export interface LearnerState {
@@ -427,5 +450,6 @@ export interface LearnerState {
   exams: ExamRecord[];
   bosses: Record<string, { best: number; t: number; cleared: boolean }>;
   formulasTried: string[];
+  pathway: PathwayState;
   settings: Settings;
 }

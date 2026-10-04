@@ -7,6 +7,7 @@ import { setTutorFocus } from '../../state/tutor';
 import { nextLessonConcept } from '../../engine/planner';
 import { CONCEPT_BY_ID } from '../../content/concepts';
 import { playSound } from '../../lib/sound';
+import * as fx from '../../lib/fx';
 import { Rich, plain } from '../ui/Rich';
 import { Icon } from '../ui/Icon';
 import { SourceTag, SupportingTag, LinkBtn, Slider } from '../ui';
@@ -14,7 +15,7 @@ import { Visual } from '../charts/Charts';
 import { Widget } from '../interactive/registry';
 import { FormulaCard } from '../FormulaCard';
 
-const KIND_LABEL: Record<LessonStep['kind'], { label: string; icon: string }> = {
+export const KIND_LABEL: Record<LessonStep['kind'], { label: string; icon: string }> = {
   hook: { label: 'Hook', icon: 'zap' },
   predict: { label: 'Predict', icon: 'eye' },
   explain: { label: 'Explain', icon: 'book' },
@@ -87,7 +88,7 @@ function InlineInputView({ input, done, onAnswer }: { input: InlineInput; done: 
 
 /* ---------------- Individual steps ---------------- */
 
-function StepBody({ step, concept, index, state, setState }: { step: LessonStep; concept: Concept; index: number; state: StepState; setState: (s: StepState) => void }) {
+export function StepBody({ step, concept, index, state, setState }: { step: LessonStep; concept: Concept; index: number; state: StepState; setState: (s: StepState) => void }) {
   switch (step.kind) {
     case 'hook':
       return (
@@ -146,6 +147,8 @@ function StepBody({ step, concept, index, state, setState }: { step: LessonStep;
             const first = !state.tries;
             setState({ ...state, answer: r, tries: (state.tries ?? 0) + 1, everWrong: state.everWrong || !r.correct });
             playSound(r.correct ? 'correct' : 'wrong', getState().settings.sound);
+            const clicked = document.activeElement instanceof HTMLElement && document.activeElement.closest('.step-card') ? document.activeElement : document.querySelector('.step-card');
+            if (r.correct) fx.correct(clicked, {}); else fx.wrong(null);
             if (!r.correct && first) setLessonStep(concept.id, index, { wrongCheck: true });
             if (first) {
               answerQuestion({
@@ -242,7 +245,7 @@ function StepBody({ step, concept, index, state, setState }: { step: LessonStep;
   }
 }
 
-interface StepState {
+export interface StepState {
   answer?: InlineResult;
   tries?: number;
   everWrong?: boolean;
@@ -252,7 +255,7 @@ interface StepState {
   rating?: number;
 }
 
-function stepReady(step: LessonStep, st: StepState) {
+export function stepReady(step: LessonStep, st: StepState) {
   if (step.kind === 'predict') return !!st.answer;
   if (step.kind === 'check') return !!st.answer;
   if (step.kind === 'recall') return st.rating !== undefined;

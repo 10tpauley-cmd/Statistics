@@ -10,6 +10,7 @@ import { BOSSES } from '../../content/boss';
 import { WIDGETS } from '../interactive/registry';
 import { plain } from '../ui/Rich';
 import { Icon } from '../ui/Icon';
+import * as fx from '../../lib/fx';
 
 /* ---------------- Toasts ---------------- */
 
@@ -20,6 +21,7 @@ export function Toasts() {
   useEffect(() => onAppEvent((e) => {
     if (e.kind !== 'toast') return;
     const id = Date.now() + Math.random();
+    if (e.tone === 'success') fx.sound('coin');
     setItems((xs) => [...xs.slice(-3), { ...e, id }]);
     window.setTimeout(() => setItems((xs) => xs.filter((x) => x.id !== id)), 4200);
   }), []);
@@ -45,6 +47,7 @@ export function Celebrations() {
   useEffect(() => onAppEvent((e) => {
     if (e.kind !== 'celebrate') return;
     const id = Date.now();
+    if (e.strength === 'big') { fx.celebrate('boss'); fx.sound('victory'); }
     setCur({ ...e, id });
     window.setTimeout(() => setCur((c) => (c?.id === id ? null : c)), e.strength === 'big' ? 3200 : 1800);
   }), []);

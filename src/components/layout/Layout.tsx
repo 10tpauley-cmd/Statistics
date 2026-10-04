@@ -7,10 +7,11 @@ import { dueReviews, openMistakes } from '../../engine/planner';
 import { levelFromXp, xpForLevel, liveStreak } from '../../engine/learner';
 import { Icon } from '../ui/Icon';
 
-const NAV: { label: string; items: { to: string; label: string; icon: string; count?: 'review' | 'mistakes' }[] }[] = [
+const NAV: { label: string; items: { to: string; label: string; icon: string; count?: 'review' | 'mistakes'; special?: boolean }[] }[] = [
   {
     label: 'Learn',
     items: [
+      { to: '/pathway', label: 'The Pathway', icon: 'map', special: true },
       { to: '/', label: 'Dashboard', icon: 'home' },
       { to: '/learn', label: 'Course path', icon: 'book' },
       { to: '/practice', label: 'Practice', icon: 'target' },
@@ -79,7 +80,7 @@ function Sidebar() {
               {g.items.map((it) => {
                 const n = it.count ? counts[it.count] : 0;
                 return (
-                  <a key={it.to} href={href(it.to)} className={`nav-item ${isActive(path, it.to) ? 'active' : ''}`} aria-current={isActive(path, it.to) ? 'page' : undefined} onClick={() => setUi({ sidebarOpen: false })}>
+                  <a key={it.to} href={href(it.to)} className={`nav-item ${it.special ? 'nav-pathway' : ''} ${isActive(path, it.to) ? 'active' : ''}`} aria-current={isActive(path, it.to) ? 'page' : undefined} onClick={() => setUi({ sidebarOpen: false })}>
                     <Icon name={it.icon} size={18} />
                     {it.label}
                     {n > 0 && <span className="count">{n}</span>}
@@ -139,10 +140,10 @@ function Topbar() {
         <button className="btn ghost sm icon hide-focus" aria-label="Toggle dark mode" title="Toggle dark mode" onClick={() => updateSettings({ theme: dark ? 'light' : 'dark' })}>
           <Icon name={dark ? 'sun' : 'moon'} size={16} />
         </button>
-        <a className="stat-pill hide-focus" href={href('/progress')} title={`${streak} day streak (best ${s.streak.best})`} style={{ color: 'var(--text)' }}>
+        <a className="stat-pill hide-focus" data-streak-pill href={href('/progress')} title={`${streak} day streak (best ${s.streak.best})`} style={{ color: 'var(--text)' }}>
           <span aria-hidden="true">🔥</span> {streak}<span className="sr-only"> day streak</span>
         </a>
-        <a className="stat-pill hide-focus hide-sm" href={href('/progress')} title={`${into} / ${need} XP to level ${level + 1}`} style={{ color: 'var(--text)' }}>
+        <a className="stat-pill hide-focus hide-sm" data-xp-pill href={href('/progress')} title={`${into} / ${need} XP to level ${level + 1}`} style={{ color: 'var(--text)' }}>
           <Icon name="zap" size={14} /> Lv {level}
           <span className="bar" style={{ width: 54, height: 6 }}><span style={{ width: `${(into / need) * 100}%` }} /></span>
         </a>
@@ -157,7 +158,7 @@ function MobileNav() {
   const due = dueReviews(s).length;
   const items = [
     { to: '/', label: 'Home', icon: 'home' },
-    { to: '/learn', label: 'Learn', icon: 'book' },
+    { to: '/pathway', label: 'Pathway', icon: 'map' },
     { to: '/practice', label: 'Practice', icon: 'target' },
     { to: '/review', label: due ? `Review (${due})` : 'Review', icon: 'repeat' },
   ];

@@ -1,7 +1,7 @@
 import type { Generator } from '../types';
 import type { Rng } from '../../lib/stats/random';
 import { build, gen, mc, num, part, f, type Opt } from './helpers';
-import { binomMean, binomPmf, binomProb, binomSd, distSd, expectedValue, sumIndependent } from '../../lib/stats/probability';
+import { binomMean, binomProb, binomSd, distSd, expectedValue, sumIndependent } from '../../lib/stats/probability';
 
 function randomDist(rng: Rng, k = 5) {
   const x = Array.from({ length: k }, (_, i) => i);
@@ -303,12 +303,12 @@ const binomial: Generator[] = [
     const k = op === 'eq' ? rng.int(1, n - 1) : op === 'ge' ? rng.int(Math.ceil(n / 2), n) : rng.int(0, Math.floor(n / 2));
     const v = binomProb(n, b.p, op, k);
     const words = { eq: `exactly ${k}`, ge: `at least ${k}`, le: `at most ${k}` };
-    const alt = op === 'ge' ? binomProb(n, b.p, 'gt', k) : op === 'le' ? binomProb(n, b.p, 'lt', k) : binomPmf(n, b.p, k) * 0 + b.p ** k;
+    const alt = op === 'ge' ? binomProb(n, b.p, 'gt', k) : op === 'le' ? binomProb(n, b.p, 'lt', k) : b.p ** k;
     return build({
       concept: 'binomial', level, type: 'calculation',
       context: b.c.replace('{n}', String(n)) + ` X = number of ${b.s}.`,
       prompt: `Find P(X ${op === 'eq' ? '=' : op === 'ge' ? '≥' : '≤'} ${k}) — **${words[op]}** ${b.s}. (Use the Calculator\'s binomial tool.)`,
-      answer: num(v, Math.max(0.0005, v * 0.005), { wrong: [{ value: alt, misconception: op === 'eq' ? 'binom-conditions' : 'strict-vs-inclusive', why: op === 'eq' ? `p^k ignores the failures and the ${'​'}number of arrangements.` : `"${words[op]}" includes ${k}.` }] }),
+      answer: num(v, Math.max(0.0005, v * 0.005), { wrong: [{ value: alt, misconception: op === 'eq' ? 'binom-conditions' : 'strict-vs-inclusive', why: op === 'eq' ? `p^k ignores the failures and the number of arrangements.` : `"${words[op]}" includes ${k}.` }] }),
       hints: [`X ~ B(${n}, ${b.p}).`, op === 'eq' ? `P(X = ${k}) = C(${n}, ${k}) · ${b.p}^${k} · ${f(1 - b.p, 2)}^${n - k}.` : `Add P(X = x) for x ${op === 'ge' ? `= ${k}, …, ${n}` : `= 0, …, ${k}`}.`, 'Use technology (Calculator → Binomial).'],
       solution: [`X ~ B(${n}, ${b.p})`, `P(X ${op === 'eq' ? '=' : op === 'ge' ? '≥' : '≤'} ${k}) = **${f(v, 4)}**`],
       takeaway: 'Identify n and p, then let technology do the arithmetic.',

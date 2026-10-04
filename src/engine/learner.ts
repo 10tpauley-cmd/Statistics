@@ -247,7 +247,8 @@ export function recordAttempt(state: LearnerState, input: AttemptInput): { state
     mistakes,
   };
   const withXp = addXp(next, xp, 'answer', now, events);
-  const touched = touchDay(withXp, now, { problems: 1, correct: input.correct ? 1 : 0, ms: input.ms });
+  // Study time comes from the activity heartbeat (addStudyTime), not per-answer durations, to avoid double counting.
+  const touched = touchDay(withXp, now, { problems: 1, correct: input.correct ? 1 : 0 });
 
   const after = masteryInfo(touched, id, now);
   let finalState = touched;

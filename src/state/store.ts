@@ -162,5 +162,7 @@ export function emit(e: AppEvent) {
 }
 export function onAppEvent(l: (e: AppEvent) => void) {
   eventListeners.add(l);
-  return () => eventListeners.delete(l);
+  return () => {
+    eventListeners.delete(l);
+  };
 }

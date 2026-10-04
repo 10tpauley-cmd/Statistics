@@ -141,7 +141,7 @@ const rules: Generator[] = [
     return build({
       concept: 'prob-rules', level, type: 'conceptual',
       prompt: `Are these events mutually exclusive? A: ${it.a}. B: ${it.b}.`,
-      answer: mc(rng, [['Yes — they cannot happen at the same time', it.me, it.me ? 'There is no outcome in both events.' : 'They can happen together (there is overlap).'], ['No — they can happen at the same time', !it.me, !it.me ? 'There is an overlap, so P(A and B) > 0.' : 'They can\'t both happen.', it.me ? undefined : undefined]], false),
+      answer: mc(rng, [['Yes — they cannot happen at the same time', it.me, it.me ? 'There is no outcome in both events.' : 'They can happen together (there is overlap).'], ['No — they can happen at the same time', !it.me, !it.me ? 'There is an overlap, so P(A and B) > 0.' : 'They can\'t both happen.']], false),
       hints: ['Can a single outcome belong to both events?'],
       solution: [it.me ? 'No overlap → mutually exclusive → P(A or B) = P(A) + P(B).' : 'Overlap exists → not mutually exclusive → subtract P(A and B).'],
       takeaway: 'Mutually exclusive = no overlap.',

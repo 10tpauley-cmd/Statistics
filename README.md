@@ -12,9 +12,12 @@ npm run dev        # http://localhost:5173
 npm run build      # type-check + production build into dist/
 npm test           # unit tests (stats engine vs. PDF values, generators, learner model)
 npm run e2e        # Playwright end-to-end tests (desktop + mobile)
+npm run build:single  # one self-contained HTML file in dist-single/
 ```
 
-The production build is fully static. It uses relative paths and a hash router, so `dist/` works from any static host or straight from disk.
+The production build is fully static, with relative paths and a hash router, so `dist/` works from any static host.
+
+`npm run build:single` inlines everything (scripts, styles, math fonts, icon) into a single `index.html` of about 2 MB. You can double-click it to open the app with no server or install. Progress is saved in that browser's local storage.
 
 ## What's inside
 

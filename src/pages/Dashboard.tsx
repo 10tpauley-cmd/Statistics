@@ -356,7 +356,7 @@ function PathwayHero() {
       <Bar value={st.pct} className="white" label="Journey progress" />
       <div className="row wrap mt">
         {cur ? <LinkBtn to={`/pathway/play/${cur.id}`} className="btn white"><Icon name="play" size={16} /> {started ? 'Continue Pathway' : 'Begin the Pathway'}</LinkBtn>
-          : view.wall ? <LinkBtn to={`/pathway/review/${view.wall.status.weakest[0]}`} className="btn white"><Icon name="repeat" size={16} /> Review {CONCEPT_BY_ID[view.wall.status.weakest[0]].title}</LinkBtn> : null}
+          : view.wall ? <LinkBtn to={`/pathway/review/${view.wall.status.weakest[0]}`} className="btn white wrap-btn"><Icon name="repeat" size={16} /> Review {CONCEPT_BY_ID[view.wall.status.weakest[0]].title}</LinkBtn> : null}
         <LinkBtn to="/pathway" className="btn ghost"><span style={{ color: '#fff' }}>Open the map</span></LinkBtn>
       </div>
     </div>

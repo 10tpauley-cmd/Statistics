@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fiveNumber, iqrFences, mean, median, modes, percentileOf, sd, summarize, twoSdFences, variance, stemAndLeaf, frequencyTable } from '../src/lib/stats/descriptive';
-import { linearRegression, fitLinear, fitQuadratic } from '../src/lib/stats/regression';
+import { linearRegression, fitLinear, fitQuadratic, fitExponential } from '../src/lib/stats/regression';
 import { binomPmf, binomProb, binomSd, distSd, expectedValue, sumIndependent, nCr } from '../src/lib/stats/probability';
 import { parseNumber, fmt } from '../src/lib/stats/format';
 import { DATASETS, BIVARIATE } from '../src/content/datasets';
@@ -113,13 +113,16 @@ describe('regression matches the PDF', () => {
     expect(m.r).toBeCloseTo(0.806, 3);
     expect(m.r2).toBeCloseTo(0.649, 3);
   });
-  it('iPhone linear and quadratic (p.14)', () => {
+  it('iPhone linear, quadratic and exponential (p.14)', () => {
     const lin = fitLinear(bv('iphone').x, bv('iphone').y);
     expect(lin.r2).toBeCloseTo(0.9138, 4);
     expect(lin.s).toBeCloseTo(1.4429, 4);
     const quad = fitQuadratic(bv('iphone').x, bv('iphone').y);
     expect(quad.r2).toBeCloseTo(0.9838, 3);
     expect(quad.s).toBeCloseTo(0.6761, 3);
+    const exp = fitExponential(bv('iphone').x, bv('iphone').y);
+    expect(exp.r2).toBeCloseTo(0.97, 2);
+    expect(exp.s).toBeCloseTo(1.5587, 4);
   });
 });
 

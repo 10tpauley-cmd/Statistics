@@ -90,8 +90,10 @@ export function PathwayCompletePage() {
     const a = document.createElement('a');
     a.href = url;
     a.download = 'stat-lab-statistics-master.svg';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30_000); // some browsers start the download after click() returns
   };
   return (
     <div className="content narrow pw-final">

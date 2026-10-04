@@ -232,13 +232,15 @@ export function PathwayPage() {
 
   const worldTop = () => (worldRef.current ? worldRef.current.getBoundingClientRect().top + window.scrollY : 0);
   const jumpToY = (y: number, smooth = true) => window.scrollTo({ top: Math.max(0, worldTop() + y - window.innerHeight * 0.45), behavior: smooth ? 'smooth' : 'auto' });
-  const jumpToCurrent = (smooth = true) => {
+  /** Scroll to where the journey stands; with focus=true also move keyboard focus there (button / C key). */
+  const jumpToCurrent = (smooth = true, focus = false) => {
+    const focusEl = (sel: string) => focus && document.querySelector<HTMLElement>(sel)?.focus({ preventScroll: true });
     if (!view.current && view.wall) {
       const gate = layout.regions[view.wall.region.index + 1];
-      if (gate) return jumpToY(gate.gateY + 40, smooth);
+      if (gate) { jumpToY(gate.gateY + 40, smooth); focusEl('.pw-wall-card button'); return; }
     }
     const cur = view.current ? layout.byId[view.current.id] : layout.nodes[layout.nodes.length - 1];
-    if (cur) jumpToY(cur.y, smooth);
+    if (cur) { jumpToY(cur.y, smooth); focusEl(`[data-node="${cur.node.id}"] .pw-node`); }
   };
   const jumpToRegion = (i: number) => {
     const r = layout.regions[i];
@@ -316,8 +318,8 @@ export function PathwayPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
-      if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || e.metaKey || e.ctrlKey || selected || intro) return;
-      if (e.key === 'c') jumpToCurrent();
+      if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable || e.metaKey || e.ctrlKey || e.altKey || selected || intro || welcome) return;
+      if (e.key === 'c') jumpToCurrent(true, true);
       if (e.key === ']') jumpToRegion(Math.min(P.regions.length - 1, regionAt() + 1));
       if (e.key === '[') jumpToRegion(Math.max(0, regionAt() - 1));
     };
@@ -386,18 +388,18 @@ export function PathwayPage() {
             <div className="pw-progress-bar"><span style={{ width: `${Math.max(2, pct)}%` }} /></div>
             <b>{pct}%</b>
           </div>
-          <div className="pw-region-chips" role="tablist" aria-label="Jump to region" ref={chipsRef}>
+          <div className="pw-region-chips" role="group" aria-label="Jump to region" ref={chipsRef}>
             {P.regions.map((r, i) => {
               const done = r.main.every((n) => view.states[n.id] === 'completed' || view.states[n.id] === 'mastered');
               return (
-                <button key={r.spec.id} role="tab" aria-selected={i === regionIdx} className={`pw-chip theme-${r.spec.theme} ${i === regionIdx ? 'active' : ''} ${done ? 'done' : ''}`} onClick={() => jumpToRegion(i)} title={`Region ${r.spec.number}: ${r.spec.name}`}>
+                <button key={r.spec.id} aria-current={i === regionIdx ? 'location' : undefined} aria-label={`Region ${r.spec.number}: ${r.spec.name}${done ? ', complete' : ''}`} className={`pw-chip theme-${r.spec.theme} ${i === regionIdx ? 'active' : ''} ${done ? 'done' : ''}`} onClick={() => jumpToRegion(i)} title={`Region ${r.spec.number}: ${r.spec.name}`}>
                   <span>{r.spec.emoji}</span><span className="pw-chip-name">{r.spec.number}. {r.spec.name.replace(/^The /, '')}</span>{done && <span>✓</span>}
                 </button>
               );
             })}
           </div>
           <div className="row" style={{ gap: 4 }}>
-            <button className="btn sm primary" onClick={() => jumpToCurrent()} title="Jump to your current level (C)"><Icon name="target" size={14} /> <span className="hide-sm">Current</span></button>
+            <button className="btn sm primary" onClick={() => jumpToCurrent(true, true)} title="Jump to your current level (C)"><Icon name="target" size={14} /> <span className="hide-sm">Current</span></button>
             <button className="btn sm ghost icon" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Top" title="Top"><Icon name="right" size={14} className="rot-up" /></button>
             <button className="btn sm ghost icon" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} aria-label="Bottom" title="Bottom"><Icon name="right" size={14} className="rot-down" /></button>
           </div>
@@ -443,13 +445,14 @@ export function PathwayPage() {
           {layout.encounters.map((e) => <path key={e.node.id} d={`M${e.anchor.x},${e.anchor.y} Q${(e.anchor.x + e.x) / 2},${e.anchor.y + 70} ${e.x},${e.y}`} className="pw-road-branch" />)}
         </svg>
 
-        {layout.encounters.map((e) => (
-          <NodeTile key={e.node.id} placed={e} state={view.states[e.node.id]} current={false} offset={offset} stars={0} onOpen={() => open(e.node)} />
-        ))}
-        {layout.nodes.map((pn) => (
+        {/* Path order (each side encounter right after the node it branches from) so Tab follows the road. */}
+        {layout.nodes.map((pn) => [
           <NodeTile key={pn.node.id} placed={pn} state={view.states[pn.node.id]} current={view.current?.id === pn.node.id} offset={offset}
-            stars={pn.node.kind === 'level' ? s.pathway.levels[pn.node.id]?.stars ?? 0 : 0} review={markers[pn.node.id]} onOpen={() => open(pn.node)} />
-        ))}
+            stars={pn.node.kind === 'level' ? s.pathway.levels[pn.node.id]?.stars ?? 0 : 0} review={markers[pn.node.id]} onOpen={() => open(pn.node)} />,
+          ...layout.encounters.filter((e) => e.anchor === pn).map((e) => (
+            <NodeTile key={e.node.id} placed={e} state={view.states[e.node.id]} current={false} offset={offset} stars={0} onOpen={() => open(e.node)} />
+          )),
+        ])}
 
         <div className="pw-finale" style={{ top: layout.height - 70 }}>
           {s.pathway.completedAt ? <button className="btn primary" onClick={() => navigate('/pathway/complete')}>🎉 View your journey summary</button> : <span className="small muted">👑 The journey ends with the Grand Archivist.</span>}
@@ -457,7 +460,7 @@ export function PathwayPage() {
       </div>
 
       {!currentVisible && view.current && (
-        <button className="btn primary pw-jump" onClick={() => jumpToCurrent()}><Icon name="target" size={16} /> Jump to current</button>
+        <button className="btn primary pw-jump" onClick={() => jumpToCurrent(true, true)}><Icon name="target" size={16} /> Jump to current</button>
       )}
       {selected && <NodeSheet node={selected} view={view} onClose={() => setSelected(null)} />}
       {intro && (

@@ -732,6 +732,7 @@ a.chip:hover { text-decoration: none; border-color: var(--border-strong); }
 .pw-road-branch { fill: none; stroke: color-mix(in srgb, var(--muted) 55%, transparent); stroke-width: 3; stroke-dasharray: 4 7; stroke-linecap: round; }
 
 .pw-node-wrap { position: absolute; transform: translate(-50%, -50%); z-index: 3; display: flex; flex-direction: column; align-items: center; }
+.pw-node-wrap.kind-encounter { z-index: 2; }
 .pw-node { position: relative; border: 0; background: none; padding: 0; cursor: pointer; display: grid; place-items: center; transition: transform 0.15s var(--ease); }
 .pw-node:hover { transform: translateY(-3px) scale(1.04); }
 .pw-node:active { transform: translateY(2px) scale(0.97); }
@@ -799,7 +800,7 @@ a.chip:hover { text-decoration: none; border-color: var(--border-strong); }
 .pw-intro-scrim { z-index: 92; }
 .pw-intro { overflow-x: hidden; overflow-y: auto; }
 .pw-intro-art { position: relative; display: flex; justify-content: center; padding-top: 18px; background: linear-gradient(180deg, var(--rg-a), var(--rg-b)); }
-.pw-intro-close { position: absolute; top: 10px; right: 10px; }
+.pw-intro-close { position: absolute; top: 10px; right: 10px; color: var(--text); background: color-mix(in srgb, var(--surface) 75%, transparent); }
 .pw-intro-title { font-size: 1.9rem; margin: 4px 0; }
 .pw-quote { font-style: italic; color: var(--muted); margin: 0; }
 

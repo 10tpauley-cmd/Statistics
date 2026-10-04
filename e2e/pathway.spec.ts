@@ -37,9 +37,11 @@ test.describe('the pathway', () => {
     await locked.click();
     await expect(page.getByText(/Locked\./)).toBeVisible();
     await page.keyboard.press('Escape');
-    await page.locator('.pw-chip').nth(2).click();
+    await page.getByRole('button', { name: /^Region 3: / }).click();
     await page.getByRole('button', { name: /Current/ }).first().click();
     await expect(page.locator('.pw-node-wrap.is-current')).toBeInViewport();
+    // Keyboard users land on the current node, not just the scroll position.
+    await expect(page.locator('.pw-node-wrap.is-current .pw-node')).toBeFocused();
   });
 
   test('mini-boss battle: phases, damage and a result screen', async ({ page, context }) => {

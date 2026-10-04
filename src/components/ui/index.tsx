@@ -90,7 +90,8 @@ export function useDialog(ref: RefObject<HTMLElement | null>, onClose: () => voi
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     };
     window.addEventListener('keydown', onKey);
-    const t = window.setTimeout(() => ((initial ? ref.current?.querySelector<HTMLElement>(initial) : null) ?? items()[0])?.focus(), 10);
+    // preventScroll: focusing a button at the bottom of a scrollable dialog mustn't open it scrolled down.
+    const t = window.setTimeout(() => ((initial ? ref.current?.querySelector<HTMLElement>(initial) : null) ?? items()[0])?.focus({ preventScroll: true }), 10);
     return () => {
       window.clearTimeout(t);
       window.removeEventListener('keydown', onKey);

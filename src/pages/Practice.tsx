@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ConceptId, Generator, Question, SessionRecord, StudyMode } from '../engine/types';
 import { useLearner, getState } from '../state/store';
-import { startSession, endSession, recordRecall, LEVEL_NAMES } from '../state/actions';
+import { startSession, endSession, recordRecall, resolveMistake, LEVEL_NAMES } from '../state/actions';
 import { setTutorFocus } from '../state/tutor';
 import { cs, masteryInfo } from '../engine/learner';
 import { mixedPool, openMistakes, startedConcepts } from '../engine/planner';
@@ -166,7 +166,11 @@ function PracticeSession({ mode, concept }: { mode: Mode; concept?: ConceptId })
     setStreak(o.correct ? streak + 1 : 0);
     ctx.current.recentGens = [...ctx.current.recentGens, cur.q.generatorId].slice(-6);
     ctx.current.recentConcepts = [...ctx.current.recentConcepts, cur.q.concept].slice(-4);
-    if (cur.mistakeId) ctx.current.usedMistakes.add(cur.mistakeId);
+    if (cur.mistakeId) {
+      ctx.current.usedMistakes.add(cur.mistakeId);
+      // A correct fresh variant fixes the mistake, even when it came from a lesson check or boss stage.
+      if (o.correct && o.hints === 0) resolveMistake(cur.mistakeId);
+    }
     if (mode === 'quick' && nextResults.length >= 5) { finish(); return; }
     const n = nextQuestion(ctx.current);
     if (!n) { finish(); return; }

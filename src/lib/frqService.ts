@@ -1,6 +1,5 @@
 import type { ConceptId, FrqFeedback, TeachRubric } from '../engine/types';
 import { evaluateOffline } from '../engine/frq';
-import { gradeFreeResponse, AiError } from './ai';
 import { CONCEPT_BY_ID } from '../content/concepts';
 import { getState } from '../state/store';
 import { plain } from '../components/ui/Rich';
@@ -37,6 +36,8 @@ export async function gradeFrq(args: { concept: ConceptId; prompt: string; conte
   if (!aiAvailable()) return { feedback: offline };
   const s = getState().settings;
   try {
+    // The Claude SDK is loaded on demand so learners without a key never download it.
+    const { gradeFreeResponse } = await import('./ai');
     const feedback = await gradeFreeResponse({
       apiKey: s.aiKey.trim(),
       conceptTitle: CONCEPT_BY_ID[args.concept].title,
@@ -50,6 +51,6 @@ export async function gradeFrq(args: { concept: ConceptId; prompt: string; conte
     });
     return { feedback };
   } catch (e) {
-    return { feedback: offline, aiError: e instanceof AiError ? e.message : 'AI feedback failed; showing offline rubric check.' };
+    return { feedback: offline, aiError: e instanceof Error && e.name === 'AiError' ? e.message : 'AI feedback failed; showing offline rubric check.' };
   }
 }

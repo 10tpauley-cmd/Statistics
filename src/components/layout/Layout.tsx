@@ -128,7 +128,7 @@ function Topbar() {
       {ui.focus ? <FocusTimer /> : (
         <button className="search-trigger" onClick={() => setUi({ searchOpen: true })} aria-label="Search everything">
           <Icon name="search" size={16} />
-          <span style={{ flex: 1 }}>Search concepts, formulas, terms…</span>
+          <span className="search-label">Search concepts, formulas, terms…</span>
           <span className="kbd hide-sm">Ctrl K</span>
         </button>
       )}

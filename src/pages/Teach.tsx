@@ -26,6 +26,7 @@ export function TeachPage({ query }: { query: URLSearchParams }) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [res, setRes] = useState<FrqResult | null>(null);
+  const [dup, setDup] = useState(false);
   const history = s.teach.filter((t) => t.concept === id);
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
 
@@ -37,7 +38,7 @@ export function TeachPage({ query }: { query: URLSearchParams }) {
     const r = await gradeFrq({ concept: id, prompt: c.teach.prompt, rubric: c.teach, answer: text, mode: 'teach' });
     setBusy(false);
     setRes(r);
-    recordTeach(id, text, r.feedback);
+    setDup(recordTeach(id, text, r.feedback).duplicate);
   };
 
   return (
@@ -73,6 +74,7 @@ export function TeachPage({ query }: { query: URLSearchParams }) {
           <button className="btn primary" onClick={submit} disabled={words < 15 || busy}>{busy ? <><span className="spinner" /> Reading…</> : <><Icon name="send" size={16} /> Get feedback</>}</button>
         </div>
         {res && <FrqFeedbackView fb={res.feedback} aiError={res.aiError} />}
+        {res && dup && <div className="callout warn small mt-sm">You've submitted this exact explanation before, so it doesn't count as new evidence. Revise it using the feedback to improve your score.</div>}
         {res && (
           <div className="row wrap mt">
             <button className="btn" onClick={() => { setRes(null); }}>Revise my explanation</button>

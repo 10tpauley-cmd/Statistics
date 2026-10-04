@@ -43,7 +43,7 @@ function ListField({ label, value, onChange, presets, placeholder }: { label: st
   return (
     <div className="field">
       <label>{label}</label>
-      <textarea className="textarea" style={{ minHeight: 70 }} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? 'e.g. 27, 11, 22, 21, 40'} />
+      <textarea className="textarea" style={{ minHeight: 70 }} aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? 'e.g. 27, 11, 22, 21, 40'} />
       {presets && (
         <div className="row wrap" style={{ gap: 6 }}>
           <span className="tiny muted">Course data:</span>

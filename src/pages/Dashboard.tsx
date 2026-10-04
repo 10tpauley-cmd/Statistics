@@ -91,7 +91,7 @@ export function Dashboard() {
       <div className="page-head">
         <div>
           <h1>{greeting()}{s.name ? `, ${s.name}` : ''} 👋</h1>
-          <p>{plan.length ? `Today's plan: ${plan.length} steps · about ${planMinutes(plan)} minutes.` : 'You\'re caught up — great time for a mixed review or practice exam.'}</p>
+          <p>{plan.length ? `Today's plan: ${plan.length} step${plan.length === 1 ? '' : 's'} · about ${planMinutes(plan)} minutes.` : 'You\'re caught up — great time for a mixed review or practice exam.'}</p>
         </div>
         {examDays !== null && examDays >= 0 && <span className="chip warn"><Icon name="clock" size={13} /> Exam in {examDays} day{examDays === 1 ? '' : 's'}</span>}
       </div>

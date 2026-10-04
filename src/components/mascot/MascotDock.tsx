@@ -3,7 +3,7 @@ import { Mu, type MuMood } from './Mu';
 import { onAppEvent, getState, useLearner } from '../../state/store';
 import { useTutorFocus, getTutorFocus } from '../../state/tutor';
 import { navigate } from '../../lib/router';
-import { streamTutorReply, type ChatTurn } from '../../lib/ai';
+import type { ChatTurn } from '../../lib/ai';
 import { aiAvailable, conceptFacts, sourceText } from '../../lib/frqService';
 import { todayPlan, weakConcepts } from '../../engine/planner';
 import { misconceptionCounts } from '../../engine/learner';
@@ -26,13 +26,20 @@ let history: Msg[] = [];
 
 /* ---------------- Offline brain (works with no API key) ---------------- */
 
+const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Names a glossary entry answers to: term, aliases, the term without its "(abbrev)", and the abbreviation itself. */
+function namesOf(e: (typeof GLOSSARY)[number]) {
+  const paren = e.term.match(/\(([^)]+)\)/)?.[1].split(/,\s*/) ?? [];
+  return [e.term, e.term.replace(/\s*\(.*\)/, ''), ...paren, ...(e.aliases ?? [])].map((n) => n.toLowerCase().trim()).filter((n) => n.length >= 2);
+}
+
 function findTerm(q: string) {
   const t = q.toLowerCase();
   let best: { e: (typeof GLOSSARY)[number]; len: number } | null = null;
   for (const e of GLOSSARY) {
-    for (const name of [e.term, ...(e.aliases ?? [])]) {
-      const n = name.toLowerCase();
-      if (n.length >= 3 && t.includes(n) && (!best || n.length > best.len)) best = { e, len: n.length };
+    for (const n of namesOf(e)) {
+      if (new RegExp(`(^|[^a-z0-9])${esc(n)}($|[^a-z0-9])`).test(t) && (!best || n.length > best.len)) best = { e, len: n.length };
     }
   }
   return best?.e ?? null;
@@ -143,6 +150,7 @@ export function MascotDock() {
     try {
       let acc = '';
       setMsgs((xs) => [...xs, { role: 'assistant', text: '' }]);
+      const { streamTutorReply } = await import('../../lib/ai');
       for await (const chunk of streamTutorReply(getState().settings.aiKey, turns, {
         page: f.page,
         conceptTitle: f.concept ? CONCEPT_BY_ID[f.concept].title : undefined,

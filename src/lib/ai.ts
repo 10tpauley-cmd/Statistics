@@ -28,6 +28,7 @@ function client(apiKey: string) {
 export class AiError extends Error {
   constructor(message: string, readonly kind: 'auth' | 'rate' | 'refusal' | 'network' | 'other') {
     super(message);
+    this.name = 'AiError';
   }
 }
 

@@ -1,7 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { useLearner, isStorageAvailable, emit } from '../state/store';
 import { updateSettings, setName, exportData, importData, resetAll } from '../state/actions';
-import { testApiKey } from '../lib/ai';
 import { Icon } from '../components/ui/Icon';
 import { Seg, Toggle, Modal } from '../components/ui';
 import { Mu } from '../components/mascot/Mu';
@@ -53,6 +52,7 @@ export function SettingsPage() {
     const k = key.trim();
     if (!k) return;
     setTesting('busy');
+    const { testApiKey } = await import('../lib/ai');
     const r = await testApiKey(k);
     setTesting(r.ok ? { ok: true, msg: 'Connected — Mu and AI feedback are ready.' } : { ok: false, msg: r.message });
     if (r.ok && k !== st.aiKey) updateSettings({ aiKey: k });

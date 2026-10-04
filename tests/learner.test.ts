@@ -146,3 +146,19 @@ describe('xp levels', () => {
     expect(levelFromXp(xpForLevel(5) - 1)).toBe(4);
   });
 });
+
+describe('explain evidence is hard to game', () => {
+  it('self-rated recall alone can never satisfy the explain requirement', () => {
+    let s = defaultState(T0);
+    for (let i = 0; i < 30; i++) s = recordExplanation(s, 'center', 1, 'recall', T0 + i * 60_000);
+    const info = masteryInfo(s, 'center', T0 + DAY / 2);
+    expect(info.dims.explain).toBeLessThan(0.7);
+    expect(info.missing.some((m) => m.startsWith('Explain'))).toBe(true);
+  });
+
+  it('a strong graded explanation does satisfy it', () => {
+    let s = defaultState(T0);
+    for (let i = 0; i < 3; i++) s = recordExplanation(s, 'center', 0.9, 'teach', T0 + i * 3600_000);
+    expect(masteryInfo(s, 'center', T0 + DAY / 2).dims.explain).toBeGreaterThanOrEqual(0.7);
+  });
+});

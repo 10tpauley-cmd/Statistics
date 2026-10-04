@@ -37,8 +37,12 @@ export function Bar({ value, color, className = '', label }: { value: number; co
 
 export function SourceTag({ source }: { source?: Source }) {
   if (!source) return null;
-  const pages = source.pages.slice().sort((a, b) => a - b);
-  const pageText = pages.length > 4 ? `pp. ${pages[0]}–${pages[pages.length - 1]}` : pages.length > 1 ? `pp. ${pages.join(', ')}` : `p. ${pages[0]}`;
+  const pages = [...new Set(source.pages)].sort((a, b) => a - b);
+  const contiguous = pages.every((p, i) => i === 0 || p === pages[i - 1] + 1);
+  const pageText = pages.length === 1 ? `p. ${pages[0]}`
+    : contiguous && pages.length > 2 ? `pp. ${pages[0]}–${pages[pages.length - 1]}`
+    : pages.length > 5 ? `pp. ${pages.slice(0, 4).join(', ')} +${pages.length - 4} more`
+    : `pp. ${pages.join(', ')}`;
   return (
     <span className="source-tag" title={source.note ?? 'Traceable to your FCC MA120 course PDF'}>
       <Icon name="book" size={12} /> Course Source: PDF {pageText} — {source.section}

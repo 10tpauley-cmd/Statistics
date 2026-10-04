@@ -159,9 +159,13 @@ function emptyFor() {
 
 /* ---------------- Explain-it evidence ---------------- */
 
-export function recordTeach(concept: ConceptId, text: string, feedback: FrqFeedback) {
+const normText = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/** Records a Teach It explanation. Resubmitting the same text earns no new evidence (anti-gaming). */
+export function recordTeach(concept: ConceptId, text: string, feedback: FrqFeedback): { duplicate: boolean } {
   const now = Date.now();
   const score = feedback.score / 100;
+  if (getState().teach.some((t) => t.concept === concept && normText(t.text) === normText(text))) return { duplicate: true };
   const rec: TeachRecord = { id: `t-${now}`, t: now, concept, text, score, graded: feedback.source, feedback };
   let ev: LearnerEvent[] = [];
   setState((s) => {
@@ -173,6 +177,7 @@ export function recordTeach(concept: ConceptId, text: string, feedback: FrqFeedb
   if (active) noteConcept(concept);
   announce(ev, getState());
   checkAchievements();
+  return { duplicate: false };
 }
 
 export function recordRecall(concept: ConceptId, score: number) {

@@ -261,10 +261,15 @@ export function recordAttempt(state: LearnerState, input: AttemptInput): { state
 }
 
 /** Evidence from Teach-It, retrieval challenges, and lesson recall (explain dimension). */
+/** Self-rated recall can support the explain dimension but never complete it on its own (anti-gaming). */
+export const RECALL_SCORE_CAP = 0.6;
+
 export function recordExplanation(state: LearnerState, id: ConceptId, score: number, mode: StudyMode, now = Date.now()) {
   const c = structuredClone(cs(state, id));
   const d = c.dims.explain;
-  const w = mode === 'teach' ? 1.3 : 0.7;
+  const selfRated = mode === 'recall';
+  if (selfRated) score = Math.min(score, RECALL_SCORE_CAP);
+  const w = mode === 'teach' ? 1.3 : selfRated ? 0.4 : 0.7;
   d.score = d.evidence === 0 ? score * Math.min(1, w) : d.score + Math.min(0.6, 0.4 * w) * (score - d.score);
   d.evidence += w;
   d.last = now;

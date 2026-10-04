@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react';
 import type { Source } from '../../engine/types';
 import { Icon } from './Icon';
 import { href } from '../../lib/router';
@@ -66,20 +66,43 @@ export function Empty({ icon = '🌱', title, children, action }: { icon?: strin
   );
 }
 
-export function Modal({ open, onClose, title, children, wide = false }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode; wide?: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const titleId = useId();
+const FOCUSABLE = 'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Dialog keyboard behaviour: initial focus, Escape to close, Tab kept inside, focus restored on close.
+ * onClose is read through a ref so parent re-renders (new closures) don't re-run the effect and steal focus.
+ */
+export function useDialog(ref: RefObject<HTMLElement | null>, onClose: () => void, active = true, initial?: string) {
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
-    if (!open) return;
+    if (!active) return;
     const prev = document.activeElement as HTMLElement | null;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const items = () => [...(ref.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])];
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { close.current(); return; }
+      if (e.key !== 'Tab' || !ref.current) return;
+      const els = items();
+      if (!els.length) return;
+      const first = els[0], last = els[els.length - 1];
+      if (!ref.current.contains(document.activeElement)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+      else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
     window.addEventListener('keydown', onKey);
-    setTimeout(() => ref.current?.querySelector<HTMLElement>('button, input, textarea, select, a')?.focus(), 10);
+    const t = window.setTimeout(() => ((initial ? ref.current?.querySelector<HTMLElement>(initial) : null) ?? items()[0])?.focus(), 10);
     return () => {
+      window.clearTimeout(t);
       window.removeEventListener('keydown', onKey);
       prev?.focus?.();
     };
-  }, [open, onClose]);
+  }, [active, ref, initial]);
+}
+
+export function Modal({ open, onClose, title, children, wide = false }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode; wide?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useDialog(ref, onClose, open);
   if (!open) return null;
   return (
     <div className="modal-scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>

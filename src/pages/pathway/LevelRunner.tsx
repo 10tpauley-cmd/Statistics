@@ -83,7 +83,7 @@ function asLessonStep(seg: Segment): LessonStep | null {
 
 /* ---------------- Small segment components ---------------- */
 
-function McSegment({ seg, id, saved, onScored }: { seg: Extract<Segment, { kind: 'mc' }>; id: string; saved?: string; onScored: (correct: boolean, picked: string) => void }) {
+function McSegment({ seg, id, saved, record, onScored }: { seg: Extract<Segment, { kind: 'mc' }>; id: string; saved?: string; record: boolean; onScored: (correct: boolean, picked: string) => void }) {
   const [picked, setPicked] = useState<string | null>(saved ?? null);
   const input = seg.input as Extract<InlineInput, { type: 'mc' }>;
   const choose = (oid: string, el: Element) => {
@@ -91,7 +91,7 @@ function McSegment({ seg, id, saved, onScored }: { seg: Extract<Segment, { kind:
     setPicked(oid);
     const o = input.options.find((x) => x.id === oid)!;
     const correct = !!o.correct;
-    answerQuestion({
+    if (record) answerQuestion({
       question: { id: `enc:${id}`, generatorId: `enc-${id}`, concept: seg.concept, level: 3, type: 'conceptual', dims: ['recognize', 'interpret'], hints: [], prompt: seg.prompt },
       correct, hintsUsed: 0, ms: 15000, mode: 'pathway', misconception: o.misconception, yourAnswer: plain(o.text), correctAnswer: plain(input.options.find((x) => x.correct)?.text ?? ''), why: plain(seg.explain),
     });
@@ -100,6 +100,7 @@ function McSegment({ seg, id, saved, onScored }: { seg: Extract<Segment, { kind:
   };
   return (
     <>
+      {!record && <div className="callout tiny" style={{ marginBottom: 10 }}>Replay — you've already cleared this encounter, so this answer is practice only.</div>}
       <Rich text={seg.prompt} className="q-prompt" />
       <div className="options">
         {input.options.map((o, i) => {
@@ -233,6 +234,8 @@ export function LevelRunner(props: RunnerProps) {
   const perf = useRef<LevelPerformance & { perConcept: Partial<Record<ConceptId, { score: number; n: number }>> }>(
     resume ? { graded: resume.run.graded, score: resume.run.score, hints: resume.run.hints, perConcept: { ...resume.run.perConcept } } : { graded: 0, score: 0, hints: 0, perConcept: {} });
   const segRef = useRef<HTMLDivElement>(null);
+  // A cleared encounter can be replayed for fun, but its question doesn't count as new evidence again.
+  const [replayedEncounter] = useState(() => kind === 'encounter' && !!node && !!getState().pathway.encounters[node.id]);
   const [result, setResult] = useState<null | { stars: number; xp: number; acc: number; rec: ReturnType<typeof recommendAfterLevel>; firstTime: boolean }>(null);
   const seg = segments[idx];
   const concepts = useMemo(() => [...new Set(segments.flatMap((x) => (x.kind === 'intro' ? x.concepts : [])))], [segments]);
@@ -321,7 +324,7 @@ export function LevelRunner(props: RunnerProps) {
       <div className="pw-runner-bar">
         <button className="btn ghost icon sm" onClick={exit} aria-label="Back to the Pathway" title="Back to the Pathway (progress is saved)"><Icon name="x" /></button>
         <div className="pw-runner-title">
-          <span className="pw-kicker" style={{ opacity: 1, color: 'var(--rg-accent)' }}>{typeMeta.emoji} {node?.kind === 'level' ? `LEVEL ${node.number} · ` : ''}{typeMeta.label.toUpperCase()}</span>
+          <span className="pw-kicker pw-ink">{typeMeta.emoji} {node?.kind === 'level' ? `LEVEL ${node.number} · ` : ''}{typeMeta.label.toUpperCase()}</span>
           <b>{title}</b>
         </div>
         <div className="pw-segbar" aria-label={`Step ${idx + 1} of ${segments.length}`}>
@@ -334,7 +337,7 @@ export function LevelRunner(props: RunnerProps) {
           {seg.kind === 'intro' && (
             <div className="center stack">
               <div className="pw-intro-emoji">{typeMeta.emoji}</div>
-              <div className="pw-kicker" style={{ color: 'var(--rg-accent)', opacity: 1 }}>{node?.kind === 'level' ? `LEVEL ${node.number}` : typeMeta.label}</div>
+              <div className="pw-kicker pw-ink">{node?.kind === 'level' ? `LEVEL ${node.number}` : typeMeta.label}</div>
               <h1 style={{ margin: 0 }}>{seg.title}</h1>
               <Rich text={seg.text} className="pw-intro-text" />
               <div className="row wrap" style={{ justifyContent: 'center', gap: 6 }}>
@@ -381,7 +384,7 @@ export function LevelRunner(props: RunnerProps) {
           ) : <>
           {seg.kind === 'teach' && <TeachSegment concept={seg.concept} saved={answers[idx] as { text: string; res: FrqResult } | undefined} onScored={(v, d) => { keep(idx, d); score(idx, v, seg.concept); }} />}
           {seg.kind === 'formula-match' && <FormulaMatch formula={seg.formula} saved={answers[idx] as Record<string, string> | undefined} onScored={(v, d) => { keep(idx, d); score(idx, v, concepts[0]); }} />}
-          {seg.kind === 'mc' && <McSegment seg={seg} id={`${node?.id ?? 'x'}-${idx}`} saved={answers[idx] as string | undefined} onScored={(c, d) => { keep(idx, d); score(idx, c ? 1 : 0, seg.concept); }} />}
+          {seg.kind === 'mc' && <McSegment seg={seg} id={`${node?.id ?? 'x'}-${idx}`} saved={answers[idx] as string | undefined} record={!replayedEncounter} onScored={(c, d) => { keep(idx, d); score(idx, c ? 1 : 0, seg.concept); }} />}
           </>}
           {seg.kind === 'complete' && result && (
             <div className="center stack">

@@ -151,7 +151,7 @@ export function BattleRunner({ node }: { node: MiniBossNode | BossNode }) {
         )}
         {stage === 'phase' && cur && (
           <div className="card step-card center stack pw-phase-card">
-            <div className="pw-kicker" style={{ opacity: 1, color: 'var(--rg-accent)' }}>PHASE {cur.pi + 1} OF {node.phases.length}</div>
+            <div className="pw-kicker pw-ink">PHASE {cur.pi + 1} OF {node.phases.length}</div>
             <h1 style={{ margin: 0 }}>{phase.title.replace(/^Phase \d+ — /, '')}</h1>
             <p className="pw-quote"><Rich text={phase.intro} as="span" /></p>
             <button className="btn primary lg" onClick={() => setStage('task')} autoFocus>Fight <Icon name="right" size={18} /></button>

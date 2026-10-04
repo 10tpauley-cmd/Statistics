@@ -13,7 +13,7 @@ import { layoutPathway, roadPath, GATE_H, type PlacedNode } from '../../componen
 import { Landmark, Scenery } from '../../components/pathway/art';
 import { Mu } from '../../components/mascot/Mu';
 import { Icon } from '../../components/ui/Icon';
-import { Modal, Ring, Bar } from '../../components/ui';
+import { Modal, Ring, Bar, useDialog } from '../../components/ui';
 import { Rich } from '../../components/ui/Rich';
 import { navigate } from '../../lib/router';
 import * as fx from '../../lib/fx';
@@ -160,10 +160,12 @@ export function RegionIntro({ region, onBegin, onClose }: { region: BuiltRegion;
   const levels = region.main.filter((n) => n.kind === 'level');
   const minis = region.main.filter((n) => n.kind === 'mini-boss');
   const minutes = levels.reduce((a, n) => a + (n.kind === 'level' ? n.minutes : 0), 0);
+  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { fx.sound('whoosh'); }, []);
+  useDialog(ref, onClose, true, '.pw-intro-begin');
   return (
     <div className="modal-scrim pw-intro-scrim" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal wide pw-intro theme-${r.theme}`} role="dialog" aria-modal="true" aria-label={`Entering ${r.name}`}>
+      <div className={`modal wide pw-intro theme-${r.theme}`} role="dialog" aria-modal="true" aria-label={`Entering ${r.name}`} ref={ref}>
         <div className="pw-intro-art">
           <Landmark kind={r.landmarks.find((l) => !l.afterLevel)?.kind ?? 'gate'} width={300} />
           <button className="btn ghost icon sm pw-intro-close" onClick={onClose} aria-label="Close"><Icon name="x" /></button>
@@ -189,7 +191,7 @@ export function RegionIntro({ region, onBegin, onClose }: { region: BuiltRegion;
           </div>
           <div className="row between wrap">
             <span className="small muted">{levels.length} levels · {minis.length} mini-boss{minis.length === 1 ? '' : 'es'} · about {minutes >= 60 ? `${(minutes / 60).toFixed(1)} hours` : `${minutes} min`}</span>
-            <button className="btn primary lg" onClick={onBegin}>Begin journey <Icon name="right" size={18} /></button>
+            <button className="btn primary lg pw-intro-begin" onClick={onBegin}>Begin journey <Icon name="right" size={18} /></button>
           </div>
         </div>
       </div>
@@ -213,6 +215,7 @@ export function PathwayPage() {
   const [welcome, setWelcome] = useState<{ due: number } | null>(null);
   const [currentVisible, setCurrentVisible] = useState(true);
   const positioned = useRef(false);
+  const chipsRef = useRef<HTMLDivElement>(null);
   const regionIdx = currentRegionIndex(s, P);
   const destination = P.regions[regionIdx].spec;
   const due = dueReviews(s);
@@ -269,21 +272,32 @@ export function PathwayPage() {
     return () => window.clearTimeout(t);
   }, [view.current?.id]);
 
+  // Keep the active region chip visible in the (scrollable on small screens) chip strip.
+  useEffect(() => {
+    const strip = chipsRef.current;
+    const chip = strip?.querySelector<HTMLElement>('.pw-chip.active');
+    if (strip && chip) strip.scrollTo({ left: chip.offsetLeft - strip.clientWidth / 2 + chip.clientWidth / 2, behavior: 'smooth' });
+  }, [regionIdx]);
+
   // Once a mastery wall has been crossed, keep it open even if mastery later decays.
   const passedKey = view.newlyPassed.join(',');
   useEffect(() => { markWallsPassed(view.newlyPassed); }, [passedKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Daily return + region introductions.
+  // Daily return first, then the introduction of the region you're in (if you haven't had it yet).
+  const [visitChecked, setVisitChecked] = useState(false);
   useEffect(() => {
     const visit = notePathwayVisit();
     const started = Object.keys(s.pathway.levels).length > 0;
     if (visit.newDay && started) setWelcome({ due: due.length });
-    else if (view.current) {
-      const region = P.regions[view.current.regionIndex];
-      if (region.main[0].id === view.current.id && !s.pathway.introsSeen.includes(region.spec.id)) setIntro(region);
-    }
+    setVisitChecked(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    if (!visitChecked || welcome || !view.current) return;
+    const region = P.regions[view.current.regionIndex];
+    if (!s.pathway.introsSeen.includes(region.spec.id)) setIntro(region);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visitChecked, welcome, view.current?.regionIndex]);
 
   // Floating "jump to current" when the current node scrolls out of view.
   useEffect(() => {
@@ -318,11 +332,12 @@ export function PathwayPage() {
   // Drag the world with the mouse (touch already scrolls natively).
   const drag = useRef<{ y: number } | null>(null);
   const onPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType !== 'mouse' || (e.target as HTMLElement).closest('button, a')) return;
+    if (e.pointerType !== 'mouse' || e.button !== 0 || e.ctrlKey || (e.target as HTMLElement).closest('button, a')) return;
     drag.current = { y: e.clientY };
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag.current) return;
+    if ((e.buttons & 1) === 0) { drag.current = null; return; } // released outside the page (e.g. a context menu)
     window.scrollBy(0, drag.current.y - e.clientY);
     drag.current = { y: e.clientY };
   };
@@ -339,9 +354,11 @@ export function PathwayPage() {
     roadPts.push({ x: layout.width / 2, y: r.gateY + GATE_H - 110 });
     layout.nodes.filter((n) => n.node.regionIndex === r.region.index).forEach((n) => roadPts.push({ x: n.x, y: n.y, id: n.node.id }));
   });
-  const curIdx = view.current ? roadPts.findIndex((p) => p.id === view.current!.id) : roadPts.length - 1;
+  const wallEnd = view.wall ? view.wall.region.main[view.wall.region.main.length - 1].id : null;
+  const curIdx = view.current ? roadPts.findIndex((p) => p.id === view.current!.id) : wallEnd ? roadPts.findIndex((p) => p.id === wallEnd) : roadPts.length - 1;
   const donePts = roadPts.slice(0, Math.max(1, curIdx + 1));
   const todoPts = roadPts.slice(Math.max(0, curIdx));
+  const nextPts = view.current ? roadPts.slice(Math.max(0, curIdx), curIdx + 3) : [];
 
   const pct = Math.round(stats.pct * 100);
   return (
@@ -369,7 +386,7 @@ export function PathwayPage() {
             <div className="pw-progress-bar"><span style={{ width: `${Math.max(2, pct)}%` }} /></div>
             <b>{pct}%</b>
           </div>
-          <div className="pw-region-chips" role="tablist" aria-label="Jump to region">
+          <div className="pw-region-chips" role="tablist" aria-label="Jump to region" ref={chipsRef}>
             {P.regions.map((r, i) => {
               const done = r.main.every((n) => view.states[n.id] === 'completed' || view.states[n.id] === 'mastered');
               return (
@@ -387,7 +404,7 @@ export function PathwayPage() {
         </div>
       </div>
 
-      <div className="pw-world" ref={worldRef} style={{ height: layout.height }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerLeave={endDrag}>
+      <div className="pw-world" ref={worldRef} style={{ height: layout.height }} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerLeave={endDrag} onPointerCancel={endDrag}>
         {layout.regions.map((pr, ri) => {
           const r = pr.region.spec;
           const gate = r.landmarks.find((l) => !l.afterLevel);
@@ -421,6 +438,7 @@ export function PathwayPage() {
         <svg className="pw-road" width={layout.width} height={layout.height} style={{ left: offset }} aria-hidden="true">
           <path d={roadPath(roadPts)} className="pw-road-bed" />
           <path d={roadPath(todoPts)} className="pw-road-todo" />
+          <path d={roadPath(nextPts)} className="pw-road-next" />
           <path d={roadPath(donePts)} className="pw-road-done" />
           {layout.encounters.map((e) => <path key={e.node.id} d={`M${e.anchor.x},${e.anchor.y} Q${(e.anchor.x + e.x) / 2},${e.anchor.y + 70} ${e.x},${e.y}`} className="pw-road-branch" />)}
         </svg>
@@ -443,9 +461,10 @@ export function PathwayPage() {
       )}
       {selected && <NodeSheet node={selected} view={view} onClose={() => setSelected(null)} />}
       {intro && (
-        <RegionIntro region={intro} onClose={() => { markIntroSeen(intro.spec.id); setIntro(null); }}
+        <RegionIntro region={intro} onClose={() => { if (intro.index === view.current?.regionIndex) markIntroSeen(intro.spec.id); setIntro(null); }}
           onBegin={() => {
-            markIntroSeen(intro.spec.id);
+            // Previewing a region from its gate doesn't use up its introduction for when you arrive.
+            if (intro.index === view.current?.regionIndex) markIntroSeen(intro.spec.id);
             setIntro(null);
             const first = view.current && view.current.regionIndex === intro.index ? view.current : null;
             if (first) navigate(playRoute(first)); else jumpToRegion(intro.index);

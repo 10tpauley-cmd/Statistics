@@ -177,8 +177,8 @@ hr { border: 0; border-top: 1px solid var(--border); margin: 1rem 0; }
 .center { text-align: center; }
 .nowrap { white-space: nowrap; }
 
-@media (prefers-reduced-motion: reduce) { * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
-:root[data-motion='reduced'] * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; } }
+:root[data-motion='reduced'] * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 
 /* ---------------- Layout ---------------- */
 .app { display: flex; min-height: 100vh; }
@@ -680,6 +680,7 @@ a.chip:hover { text-decoration: none; border-color: var(--border-strong); }
 }
 
 .pw-page { position: relative; }
+@media (max-width: 960px) { .pw-page { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); } }
 .pw-hero { background: linear-gradient(160deg, #312e81, #4338ca 55%, #0e7490); color: #fff; padding: 28px 24px 22px; position: relative; overflow: hidden; }
 .pw-hero::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 85% 20%, rgba(255,255,255,0.18), transparent 40%), radial-gradient(circle at 10% 110%, rgba(56,189,248,0.3), transparent 45%); pointer-events: none; }
 .pw-hero-inner { max-width: 1100px; margin: 0 auto; display: flex; gap: 20px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; position: relative; z-index: 1; }
@@ -703,9 +704,11 @@ a.chip:hover { text-decoration: none; border-color: var(--border-strong); }
 .pw-chip:hover { border-color: var(--rg-accent); }
 .pw-chip.active { background: var(--rg-accent); color: #fff; border-color: transparent; }
 .pw-chip.done:not(.active) { border-color: var(--rg-accent); }
+/* Desktop: only the active region spells out its name, so all six chips fit without hidden overflow. */
+.pw-chip:not(.active) .pw-chip-name { display: none; }
 @media (max-width: 760px) { .pw-chip-name { display: none; } .pw-title { font-size: 1.4rem; } .pw-hero-stats > div { min-width: 70px; padding: 6px 10px; } }
 
-.pw-world { position: relative; overflow: hidden; touch-action: pan-y; user-select: none; cursor: grab; }
+.pw-world { position: relative; overflow: hidden; touch-action: pan-y pinch-zoom; user-select: none; cursor: grab; }
 .pw-world:active { cursor: grabbing; }
 .pw-region { position: absolute; left: 0; right: 0; background: linear-gradient(180deg, var(--rg-a), var(--rg-b)); }
 .pw-region::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 30%, color-mix(in srgb, var(--rg-light) 35%, transparent) 0 2px, transparent 3px), radial-gradient(circle at 70% 60%, color-mix(in srgb, var(--rg-light) 30%, transparent) 0 1.5px, transparent 2.5px); background-size: 140px 120px, 90px 110px; opacity: 0.5; pointer-events: none; }
@@ -780,7 +783,7 @@ a.chip:hover { text-decoration: none; border-color: var(--border-strong); }
 .pw-stars i.on { color: #f59e0b; text-shadow: 0 0 4px rgba(245,158,11,0.5); }
 .pw-gold { color: #f59e0b; letter-spacing: 1px; }
 .pw-finale { position: absolute; left: 0; right: 0; text-align: center; z-index: 3; }
-.pw-jump { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; border-radius: 99px; box-shadow: var(--shadow-lg); }
+.pw-jump { position: fixed; left: 0; right: 0; margin: 0 auto; width: max-content; bottom: 24px; z-index: 60; border-radius: 99px; box-shadow: var(--shadow-lg); }
 @media (max-width: 960px) { .pw-jump { bottom: 80px; } }
 .rot-up { transform: rotate(-90deg); }
 .rot-down { transform: rotate(90deg); }
@@ -794,7 +797,7 @@ a.chip:hover { text-decoration: none; border-color: var(--border-strong); }
 .pw-wall-card .btn { white-space: normal; height: auto; min-height: 34px; line-height: 1.25; padding-block: 7px; max-width: 100%; text-align: center; }
 
 .pw-intro-scrim { z-index: 92; }
-.pw-intro { overflow: hidden; }
+.pw-intro { overflow-x: hidden; overflow-y: auto; }
 .pw-intro-art { position: relative; display: flex; justify-content: center; padding-top: 18px; background: linear-gradient(180deg, var(--rg-a), var(--rg-b)); }
 .pw-intro-close { position: absolute; top: 10px; right: 10px; }
 .pw-intro-title { font-size: 1.9rem; margin: 4px 0; }
@@ -811,7 +814,11 @@ a.chip:hover { text-decoration: none; border-color: var(--border-strong); }
 .nav-item.nav-pathway.active { background: linear-gradient(135deg, #4338ca, #0e7490); color: #fff; }
 
 /* Pathway runners */
-.pw-runner { min-height: calc(100vh - var(--topbar-h)); background: linear-gradient(180deg, color-mix(in srgb, var(--rg-a) 70%, var(--bg)), var(--bg) 420px); }
+.pw-runner { min-height: calc(100vh - var(--topbar-h)); background: linear-gradient(180deg, color-mix(in srgb, var(--rg-runner, var(--rg-a)) 70%, var(--bg)), var(--bg) 420px); }
+/* The observatory map is a night sky in both themes, but its runner page follows the light theme. */
+.pw-runner.theme-observatory { --rg-runner: #dcd8ff; }
+:root[data-theme='dark'] .pw-runner.theme-observatory { --rg-runner: var(--rg-a); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .pw-runner.theme-observatory { --rg-runner: var(--rg-a); } }
 .pw-runner-bar { position: sticky; top: var(--topbar-h); z-index: 15; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
 .pw-runner-title { display: flex; flex-direction: column; min-width: 0; }
 .pw-runner-title b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -819,7 +826,11 @@ a.chip:hover { text-decoration: none; border-color: var(--border-strong); }
 .pw-segbar span { flex: 1; height: 8px; border-radius: 99px; background: var(--surface-3); transition: background 0.3s; }
 .pw-segbar span.done { background: var(--rg-accent); }
 .pw-segbar span.current { background: color-mix(in srgb, var(--rg-accent) 55%, var(--surface-3)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--rg-accent) 30%, transparent); }
-.pw-stage-label { font-size: 0.72rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rg-accent); margin: 4px 0 10px; }
+.pw-stage-label { font-size: 0.72rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; margin: 4px 0 10px; }
+/* Small themed labels: the region's deep tone in light mode, its light ink in dark mode (accents are too pale for small text). */
+.pw-stage-label, .pw-kicker.pw-ink { color: var(--rg-deep); opacity: 1; }
+:root[data-theme='dark'] :is(.pw-stage-label, .pw-kicker.pw-ink) { color: var(--rg-ink); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) :is(.pw-stage-label, .pw-kicker.pw-ink) { color: var(--rg-ink); } }
 .pw-seg { border-top: 4px solid var(--rg-accent); }
 .pw-intro-emoji { font-size: 3.4rem; animation: pop 0.5s var(--ease); }
 .pw-intro-text { font-size: 1.08rem; max-width: 560px; margin: 0 auto; }
@@ -877,5 +888,6 @@ a.chip:hover { text-decoration: none; border-color: var(--border-strong); }
   .pw-chip { height: 28px; padding: 0 8px; }
   .pw-hero { padding: 18px 16px 14px; }
 }
-.pw-road-todo { animation: pw-dash 1.8s linear infinite; }
+/* Only the short stretch ahead marches (animating the whole remaining road repaints a huge SVG every frame). */
+.pw-road-next { fill: none; stroke: var(--primary); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 2 16; opacity: 0.7; animation: pw-dash 1.8s linear infinite; }
 @keyframes pw-dash { to { stroke-dashoffset: -36; } }

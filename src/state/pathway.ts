@@ -1,4 +1,4 @@
-import type { ConceptId, LearnerState, PathwayLevelRecord } from '../engine/types';
+import type { ConceptId, LearnerState, LevelRun, PathwayLevelRecord } from '../engine/types';
 import { addXp, dayKey, touchDay, type LearnerEvent } from '../engine/learner';
 import { levelXp } from '../engine/pathway/progress';
 import { emit, getState, setState } from './store';
@@ -8,12 +8,15 @@ function patch(s: LearnerState, fn: (p: LearnerState['pathway']) => Partial<Lear
   return { ...s, pathway: { ...s.pathway, ...fn(s.pathway) } };
 }
 
-/** Remember where you are inside a level so leaving and coming back resumes there. */
-export function savePathwayStep(levelId: string, step: number) {
+/**
+ * Remember where you are inside a level — and how you've scored so far — so leaving and coming
+ * back resumes there without wiping (or gaming) the star rating.
+ */
+export function savePathwayStep(levelId: string, step: number, run?: LevelRun) {
   setState((s) => {
     const cur: PathwayLevelRecord = s.pathway.levels[levelId] ?? { stars: 0, best: 0, plays: 0 };
-    if (cur.step === step) return s;
-    return patch(s, (p) => ({ levels: { ...p.levels, [levelId]: { ...cur, step } } }));
+    if (cur.step === step && JSON.stringify(cur.run) === JSON.stringify(run)) return s;
+    return patch(s, (p) => ({ levels: { ...p.levels, [levelId]: { ...cur, step, run } } }));
   });
 }
 
@@ -24,8 +27,11 @@ export interface LevelCompletion {
   prevStars: number;
 }
 
-/** Finish a level. XP is paid in full once; replays only earn XP for newly reached stars (no farming). */
-export function completePathwayLevel(levelId: string, stars: number, accuracy: number): LevelCompletion {
+/**
+ * Finish a level. XP is paid in full once; replays only earn XP for newly reached stars (no farming).
+ * `accuracy` is null when nothing in the run was graded, so it can't inflate the best score.
+ */
+export function completePathwayLevel(levelId: string, stars: number, accuracy: number | null): LevelCompletion {
   const now = Date.now();
   const prev = getState().pathway.levels[levelId];
   const firstTime = !prev?.completedAt;
@@ -34,7 +40,7 @@ export function completePathwayLevel(levelId: string, stars: number, accuracy: n
   let ev: LearnerEvent[] = [];
   setState((s) => {
     const cur: PathwayLevelRecord = s.pathway.levels[levelId] ?? { stars: 0, best: 0, plays: 0 };
-    const rec: PathwayLevelRecord = { stars: Math.max(cur.stars, stars), best: Math.max(cur.best, accuracy), plays: cur.plays + 1, completedAt: cur.completedAt ?? now, step: 0 };
+    const rec: PathwayLevelRecord = { stars: Math.max(cur.stars, stars), best: accuracy === null ? cur.best : Math.max(cur.best, accuracy), plays: cur.plays + 1, completedAt: cur.completedAt ?? now, step: 0 };
     ev = [];
     const next = addXp(patch(s, (p) => ({ levels: { ...p.levels, [levelId]: rec } })), xp, 'pathway', now, ev);
     return touchDay(next, now, {});
@@ -83,10 +89,20 @@ export function recordPathwayBattle(nodeId: string, kind: 'mini-boss' | 'boss', 
     return touchDay(next, now, {});
   });
   // Existing boss system: records best score, awards its own clear XP and celebration once.
-  if (kind === 'boss' && opts.bossId && !opts.final) recordBoss(opts.bossId, score, { quiet: true });
+  const bossXp = kind === 'boss' && opts.bossId && !opts.final ? recordBoss(opts.bossId, score, { quiet: true }) : 0;
   announceEvents(ev);
   checkAchievementsNow();
-  return { passed, firstClear, xp: xp + (kind === 'boss' && !opts.final && firstClear ? 150 : 0), unitBonus };
+  return { passed, firstClear, xp: xp + bossXp, unitBonus };
+}
+
+/** Record crossed mastery walls (see PathwayView.newlyPassed). */
+export function markWallsPassed(ids: string[]) {
+  if (!ids.length) return;
+  setState((s) => {
+    const have = s.pathway.wallsPassed ?? [];
+    const add = ids.filter((id) => !have.includes(id));
+    return add.length ? patch(s, () => ({ wallsPassed: [...have, ...add] })) : s;
+  });
 }
 
 export function markIntroSeen(regionId: string) {

@@ -69,7 +69,7 @@ export const REGION_U1: RegionContent = {
       },
       generators: ['ps-param-stat', 'ps-six', 'ps-identify'],
       recall: [
-        { prompt: 'Practice 1.1–1.2 #1c: a marriage counselor wants the proportion of all the clients she counsels who stay married, and she checks the records of some of them. Name the population, the parameter, and the statistic.', answer: 'Population: **all** the clients she counsels. Parameter: the proportion of *all* her clients who stay married. Statistic: the proportion among the clients whose records she checked.' },
+        { prompt: 'Practice 1.1–1.2 #1c: a marriage counselor is interested in the proportion of the clients she counsels who stay married. Suppose she checks the records of some of them. Name the population, the parameter, and the statistic.', answer: 'Population: **all** the clients she counsels. Parameter: the proportion of *all* her clients who stay married. Statistic: the proportion among the clients whose records she checked.' },
       ],
     },
 
@@ -149,7 +149,7 @@ export const REGION_U1: RegionContent = {
       widget: {
         id: 'sampling',
         mission: 'Pick **Convenience** and press **Repeat 100×**. Then do the same for **Simple random**, **Stratified**, and **Cluster**. Tick **Reveal every square** to see the true total, and compare each method\'s *Average estimate* and *Spread (SD)* in the table. Notice where the convenience squares sit relative to the lake.',
-        takeaway: 'The convenience squares hug the entrance, far from the lake where the ducks gather, so that sample underestimates the total every single time — sampling bias. The random methods\' averages land near the truth. Cluster estimates swing the most here, because one whole column may cross the lake or miss it entirely: unbiased, but highly variable.',
+        takeaway: 'In this park the convenience squares hug the entrance, far from the lake where the ducks gather, so that sample underestimates the total every single time — sampling bias. (In the packet\'s version, p.65 #b, the researcher uses those squares *because* he noticed ducks in them, which would push the estimate too high instead. Either way the error leans in one direction.) The random methods\' averages land near the truth. Cluster estimates swing the most here, because one whole column may cross the lake or miss it entirely: unbiased, but highly variable.',
       },
       generators: ['sm-bias-direction', 'sm-best'],
       summary: [
@@ -260,7 +260,7 @@ export const REGION_U1: RegionContent = {
       },
       widget: {
         id: 'experiment-design',
-        mission: 'Label all six parts of the streaming study and press **Check my labels** until you score 6/6. Then work through *Experiment or observational study?*: for each study, ask whether the researchers **assigned** the treatment. For the observational ones, note the confounder the feedback names.',
+        mission: 'You labeled the streaming study in the lesson. This time, aim for **6/6 on your first press** of **Check my labels**, especially *Treatment* vs. *Control group*. Then work through all three studies in *Experiment or observational study?*: before you click, ask whether the researchers **assigned** the treatment. For each observational study, note the confounder the feedback names.',
         takeaway: 'Only a study that **randomly assigns** treatments can support cause and effect. In the Marshmallow Test and the video-game survey nobody assigned anything, so home environment or homework time stays tangled with the explanatory variable.',
       },
       generators: ['ex-confounder', 'ex-cause', 'ex-roles'],
@@ -309,7 +309,7 @@ export const REGION_U1: RegionContent = {
       npc: { npc: 'vera', text: 'Bias is a steady push in one direction. Collect more data the same way and you only get a more confident wrong answer.' },
       hook: {
         title: 'Two surveys, two different problems',
-        body: '- **Kentwood Public Schools** emails a survey to a **random sample of teachers** about daily planning time, and some never reply.\n- **YouPolls** lets **anyone** answer its tax question; 11 people did, every one answering "NO!"\n\nBoth surveys end up hearing from too few of the right people — but for different reasons. Ask: who chose whom?',
+        body: 'Practice 1.3–1.4 #2:\n\n- **Kentwood Public Schools** emails a survey to a **random sample of teachers** about the planning time they get each day. The district chose the teachers — but an emailed survey is easy to ignore.\n- **YouPolls** lets **anyone** answer its tax question; 11 people did, every one answering "NO!"\n\nIf answers go missing, the two surveys lose them in different ways. Ask: who chose whom?',
       },
       generators: ['bi-name-rw', 'bi-bigger', 'sm-bias-direction'],
       recall: [
@@ -417,16 +417,7 @@ export const REGION_U1: RegionContent = {
         ],
       },
       {
-        title: 'Phase 2 — Rigging the Sample', kind: 'application',
-        intro: '"Why trouble the evening students? The cafeteria at noon is so much more convenient!"',
-        tasks: [
-          { kind: 'boss-step', boss: 'boss-u1', index: 1 },
-          { kind: 'boss-step', boss: 'boss-u1', index: 2 },
-          { kind: 'boss-step', boss: 'boss-u1', index: 3 },
-        ],
-      },
-      {
-        title: 'Phase 3 — The Second Scroll', kind: 'calculation',
+        title: 'Phase 2 — The Second Scroll', kind: 'calculation',
         intro: '"Behold my trial data! Surely no villager can read a frequency table."',
         tasks: [
           {
@@ -435,12 +426,12 @@ export const REGION_U1: RegionContent = {
             visual: { type: 'table', headers: ['Weeks of symptoms', 'Frequency'], rows: [['0.5–6.5', 4], ['6.5–12.5', 2], ['12.5–18.5', 11], ['18.5–24.5', 8], ['24.5–30.5', 6], ['30.5–36.5', 5], ['36.5–42.5', 3], ['42.5–48.5', 1]], caption: 'Researcher B — 40 patients' },
             step: {
               concept: 'freq-tables', dims: ['calculate', 'interpret'], label: 'Under half a year',
-              prompt: 'What proportion of Researcher B\'s patients had symptoms for **fewer than 24.5 weeks** (less than about half a year)? Give a decimal.',
+              prompt: 'Practice #1b asks about symptoms lasting less than half a year (about 26 weeks). Using the table, what proportion of Researcher B\'s patients had symptoms for **fewer than 24.5 weeks**, the class boundary closest to that? Give a decimal.',
               answer: { kind: 'numeric', value: 0.625, tol: 0.002, wrong: [
                 { value: 0.2, why: '0.2 is only the 18.5–24.5 class (8 ÷ 40). "Fewer than 24.5 weeks" needs every class up to 24.5 — the cumulative relative frequency.', misconception: 'cumulative-confusion' },
                 { value: 25, why: '25 is the cumulative *frequency* — a count of patients. Divide by n = 40 to get a proportion.' },
               ] },
-              explain: 'Cumulative frequency through 18.5–24.5: 4 + 2 + 11 + 8 = 25 patients. Proportion = 25 ÷ 40 = **0.625**.',
+              explain: 'Cumulative frequency through 18.5–24.5: 4 + 2 + 11 + 8 = 25 patients. Proportion = 25 ÷ 40 = **0.625**. Researcher A\'s table gives 21 ÷ 40 = 0.525 at the same boundary, so B\'s group had the higher proportion.',
               hint: 'Add the frequencies of every class below 24.5 weeks, then divide by 40.',
             },
           },
@@ -462,8 +453,8 @@ export const REGION_U1: RegionContent = {
         ],
       },
       {
-        title: 'Phase 4 — Whose Data?', kind: 'interpretation',
-        intro: '"Researcher A studied people A knows personally — the most trustworthy folk in the village!"',
+        title: 'Phase 3 — Whose Data?', kind: 'interpretation',
+        intro: '"Researcher A studied people A knows personally — the most trustworthy folk in the village! And my GPA chart proves that late classes make students smarter!"',
         tasks: [
           {
             kind: 'step',
@@ -498,6 +489,15 @@ export const REGION_U1: RegionContent = {
             },
           },
           { kind: 'boss-step', boss: 'boss-u1', index: 4 },
+        ],
+      },
+      {
+        title: 'Phase 4 — Rigging the Sample', kind: 'application',
+        intro: '"Fine, my scrolls are flawed. But the council\'s survey is MINE to run! Why trouble the evening students when the cafeteria at noon is so convenient — and my Instagram poll so quick?"',
+        tasks: [
+          { kind: 'boss-step', boss: 'boss-u1', index: 1 },
+          { kind: 'boss-step', boss: 'boss-u1', index: 2 },
+          { kind: 'boss-step', boss: 'boss-u1', index: 3 },
         ],
       },
       {

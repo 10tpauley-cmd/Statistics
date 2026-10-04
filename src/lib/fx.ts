@@ -36,9 +36,13 @@ function spawn(el: HTMLElement, life: number) {
 }
 
 function at(target?: Element | DOMRect | { x: number; y: number } | null): { x: number; y: number } {
-  if (!target) return { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  const centre = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  if (!target) return centre;
   if ('getBoundingClientRect' in target) {
+    // Detached or hidden anchors (e.g. a button that just unmounted) report a 0×0 box at the corner.
+    if (!target.isConnected) return centre;
     const r = target.getBoundingClientRect();
+    if (!r.width && !r.height) return centre;
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
   if ('width' in target) return { x: target.left + target.width / 2, y: target.top + target.height / 2 };
@@ -159,6 +163,13 @@ export function comboCount() {
   return combo;
 }
 
+/** Drop the current combo silently (new session, exam start…). */
+export function resetCombo() {
+  combo = 0;
+  window.clearTimeout(comboTimer);
+  comboEl?.classList.remove('show', 'big');
+}
+
 /* ---------------- High-level moments ---------------- */
 
 /** A correct answer: burst from the anchor, XP float, combo bump, gentle glow. */
@@ -189,16 +200,16 @@ export function wrong(anchor: Element | null) {
   if (lost >= 3) float({ x: window.innerWidth / 2, y: 110 }, `Streak of ${lost} ended — keep going`, 'bad');
 }
 
-/** Stars popping in one after another (level complete). */
-export function stars(els: Element[], earned: number) {
-  els.slice(0, earned).forEach((el, i) => {
-    window.setTimeout(() => {
-      el.classList.add('fx-star-on');
-      burst(el, { count: 10, colors: GOLD, spread: 60, size: 7 });
-      sound('star');
-      haptic(10);
-    }, 350 + i * 380);
-  });
+/** Stars popping in one after another (level complete). Returns a cancel function for unmount. */
+export function stars(els: Element[], earned: number): () => void {
+  const timers = els.slice(0, earned).map((el, i) => window.setTimeout(() => {
+    if (!el.isConnected) return;
+    el.classList.add('fx-star-on');
+    burst(el, { count: 10, colors: GOLD, spread: 60, size: 7 });
+    sound('star');
+    haptic(10);
+  }, 350 + i * 380));
+  return () => timers.forEach((t) => window.clearTimeout(t));
 }
 
 /** Big moment: confetti rain from the top plus a centered burst. */
@@ -225,18 +236,47 @@ export function celebrate(kind: 'level' | 'boss' | 'unit' | 'final' = 'level') {
 
 const CLICKABLE = 'button, a[href], [role="button"], [role="radio"], [role="tab"], [role="link"], .option, .toggle, summary, input[type="checkbox"], input[type="range"]';
 
-/** Installs the press ripple + soft tick for every interactive element. Returns an uninstaller. */
+/**
+ * Installs the press ripple + soft tick for every interactive element. Returns an uninstaller.
+ * Mouse presses react on pointerdown (instant); touch and pen wait for the click, so a swipe that
+ * starts on a button and turns into a scroll stays silent. Keyboard activation ripples from the
+ * element's centre.
+ */
 export function installClickFx() {
-  const onDown = (e: PointerEvent) => {
+  let lastPointer = '';
+  const target = (e: Event) => {
     const t = (e.target as Element | null)?.closest?.(CLICKABLE) as HTMLElement | null;
-    if (!t || (t as HTMLButtonElement).disabled || t.getAttribute('aria-disabled') === 'true') return;
-    if (level() === 'off') return;
+    if (!t || (t as HTMLButtonElement).disabled || t.getAttribute('aria-disabled') === 'true') return null;
+    return level() === 'off' ? null : t;
+  };
+  const fire = (t: HTMLElement, x: number, y: number, touch: boolean) => {
     const isChoice = t.matches('.option, [role="radio"], [role="tab"], .toggle, input[type="checkbox"]');
-    ripple(e.clientX, e.clientY, isChoice ? 'var(--primary)' : 'color-mix(in srgb, var(--primary) 70%, white)');
+    ripple(x, y, isChoice ? 'var(--primary)' : 'color-mix(in srgb, var(--primary) 70%, white)');
     if (t.closest('.fx-quiet')) return;
     sound(isChoice ? 'select' : 'click');
-    if (e.pointerType === 'touch') haptic(6);
+    if (touch) haptic(6);
+  };
+  const onDown = (e: PointerEvent) => {
+    lastPointer = e.pointerType;
+    if (e.pointerType !== 'mouse') return;
+    const t = target(e);
+    if (t) fire(t, e.clientX, e.clientY, false);
+  };
+  const onClick = (e: MouseEvent) => {
+    const viaPointer = e.detail > 0;
+    if (viaPointer && lastPointer === 'mouse') return; // already handled on pointerdown
+    const t = target(e);
+    const touch = viaPointer && lastPointer === 'touch';
+    lastPointer = '';
+    if (!t) return;
+    let x = e.clientX, y = e.clientY;
+    if (!viaPointer || (!x && !y)) { const r = t.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top + r.height / 2; }
+    fire(t, x, y, touch);
   };
   document.addEventListener('pointerdown', onDown, { passive: true });
-  return () => document.removeEventListener('pointerdown', onDown);
+  document.addEventListener('click', onClick, { capture: true, passive: true });
+  return () => {
+    document.removeEventListener('pointerdown', onDown);
+    document.removeEventListener('click', onClick, { capture: true });
+  };
 }

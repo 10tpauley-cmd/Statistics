@@ -5,6 +5,7 @@ import { CONCEPT_BY_ID } from '../content/concepts';
 import { BOSS_BY_ID } from '../content/boss';
 import { emit, getState, replaceState, setState, defaultState, hydrate } from './store';
 import { playSound } from '../lib/sound';
+import { resetCombo } from '../lib/fx';
 
 /* ---------------- Event fan-out ---------------- */
 
@@ -62,10 +63,16 @@ export function activeSession() {
   return active;
 }
 
+/** Mode of the running study session, if any (graded modes keep feedback effects quiet). */
+export function activeSessionMode(): StudyMode | null {
+  return active?.mode ?? null;
+}
+
 export function startSession(mode: StudyMode, concepts: ConceptId[] = []): SessionRecord {
   const s = getState();
   if (active && active.mode === mode) return active;
   if (active) endSession();
+  resetCombo(); // a combo never carries from one session (or an exam) into the next
   active = {
     id: `s-${Date.now()}`, start: Date.now(), mode, concepts: [...concepts], problems: 0, correct: 0, hints: 0, xp: 0, activeMs: 0,
     masteryBefore: Object.fromEntries(concepts.map((c) => [c, masteryInfo(s, c).overall])),
@@ -207,7 +214,8 @@ export function recordExam(rec: ExamRecord) {
   checkAchievements();
 }
 
-export function recordBoss(id: string, score: number, opts: { quiet?: boolean } = {}) {
+/** Record a boss attempt; returns the clear XP paid (150 on the first clear, otherwise 0). */
+export function recordBoss(id: string, score: number, opts: { quiet?: boolean } = {}): number {
   const now = Date.now();
   const cleared = score >= 0.7;
   const prev = getState().bosses[id];
@@ -220,6 +228,7 @@ export function recordBoss(id: string, score: number, opts: { quiet?: boolean } 
   if (cleared && !prev?.cleared && !opts.quiet) emit({ kind: 'celebrate', strength: 'big', title: 'Boss defeated!', body: BOSS_BY_ID[id]?.title });
   announce(ev, getState());
   checkAchievements();
+  return cleared && !prev?.cleared ? 150 : 0;
 }
 
 export function finishPlacement(results: { concept: ConceptId; correct: boolean; level: number }[]) {

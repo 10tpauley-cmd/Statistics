@@ -4,7 +4,7 @@ import { subscribe, getState } from './state/store';
 import { useLocation, matchPath } from './lib/router';
 import { useLearner } from './state/store';
 import { setTutorFocus } from './state/tutor';
-import { addStudyTime } from './state/actions';
+import { activeSessionMode, addStudyTime } from './state/actions';
 import { CONCEPT_BY_ID } from './content/concepts';
 import type { ConceptId } from './engine/types';
 import { Layout } from './components/layout/Layout';
@@ -120,7 +120,9 @@ function useGlobalFx() {
     let streak = getState().streak.current;
     const unsub = subscribe(() => {
       const st = getState();
-      if (st.xp > xp) fx.pulse(document.querySelector('[data-xp-pill]'));
+      const mode = activeSessionMode();
+      // During exams and placement the header must not reveal whether an answer earned XP.
+      if (st.xp > xp && mode !== 'exam' && mode !== 'final' && mode !== 'placement') fx.pulse(document.querySelector('[data-xp-pill]'));
       if (st.streak.current > streak && streak >= 0) {
         const pill = document.querySelector('[data-streak-pill]');
         fx.pulse(pill);

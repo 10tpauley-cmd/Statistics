@@ -51,6 +51,18 @@ describe('pathway structure', () => {
     expect(shapes.size).toBeGreaterThan(6);
   });
 
+  it('every concept taught by lesson levels completes its lesson exactly once', () => {
+    const taught = new Set<string>();
+    const finished = new Map<string, number>();
+    PATHWAY.main.forEach((n) => {
+      if (n.kind !== 'level' || n.type !== 'lesson') return;
+      taught.add(n.concepts[0]);
+      segmentsFor(n).forEach((x) => { if (x.kind === 'lesson-step' && x.last) finished.set(x.concept, (finished.get(x.concept) ?? 0) + 1); });
+    });
+    expect(taught.size).toBeGreaterThan(10);
+    for (const c of taught) expect(finished.get(c), c).toBe(1);
+  });
+
   it('quick review levels are playable for every concept', () => {
     const segs = reviewSegments('std-dev', 3);
     expect(segs[0].kind).toBe('intro');
@@ -89,6 +101,23 @@ describe('pathway progress', () => {
     expect(w.ok).toBe(false);
     expect(w.requirements.find((q) => q.label.includes('mastery'))?.met).toBe(false);
     expect(w.mastery).toBeLessThan(WALL_THRESHOLD);
+  });
+
+  it('a crossed mastery wall stays open even if mastery decays later', () => {
+    const r1 = PATHWAY.regions[0];
+    const lastIdx = PATHWAY.main.indexOf(r1.main[r1.main.length - 1]);
+    const firstOfR2 = PATHWAY.regions[1].main[0];
+    const s = completeThrough(defaultState(T0), lastIdx);
+    // Recorded as passed → no re-check.
+    const passed = computeView({ ...s, pathway: { ...s.pathway, wallsPassed: [r1.spec.id] } }, PATHWAY, T0);
+    expect(passed.wall).toBeNull();
+    expect(passed.current?.id).toBe(firstOfR2.id);
+    // Progress already made beyond the wall also counts as crossed (older saves).
+    const beyond = computeView(completeThrough(defaultState(T0), lastIdx + 1), PATHWAY, T0);
+    expect(beyond.wall).toBeNull();
+    expect(beyond.current?.id).toBe(PATHWAY.regions[1].main[1].id);
+    // A wall that is still holding isn't reported as newly passed.
+    expect(computeView(s, PATHWAY, T0).newlyPassed).toEqual([]);
   });
 
   it('stars are tied to first-try accuracy and hints', () => {

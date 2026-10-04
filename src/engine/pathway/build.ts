@@ -103,7 +103,7 @@ export function segmentsFor(node: LevelNode): Segment[] {
         const st = steps[i];
         if (st.kind === 'summary') { if (!spec.summary) summary = st.points; continue; }
         if (st.kind === 'recall') hadRecall = true;
-        segs.push({ kind: 'lesson-step', concept: c, index: i, step: st, last: i === steps.length - 1 || (i === b && steps.slice(b + 1).every((x) => x.kind === 'summary')) });
+        segs.push({ kind: 'lesson-step', concept: c, index: i, step: st, last: steps.slice(i + 1).every((x) => x.kind === 'summary') });
       }
       q('practice', plan(c, 2, spec), true);
       q('apply', plan(c, 3, spec, { preferTypes: ['real-world', 'interpretation', 'graph'] }));

@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { BuiltRegion, PathNode } from '../../engine/pathway/types';
 import type { ConceptId } from '../../engine/types';
 import { useLearner } from '../../state/store';
-import { markIntroSeen, notePathwayVisit } from '../../state/pathway';
+import { markIntroSeen, markWallsPassed, notePathwayVisit } from '../../state/pathway';
 import { PATHWAY } from '../../content/pathway';
 import { computeView, journeyStats, reviewMarkers, wallStatus, currentRegionIndex, type NodeState, type PathwayView } from '../../engine/pathway/progress';
 import { LEVEL_TYPE_META, ENCOUNTER_META, taskCount } from '../../engine/pathway/build';
@@ -254,9 +254,11 @@ export function PathwayPage() {
     const cur = view.current?.id;
     if (!cur) return;
     let last: string | null = null;
-    try { last = sessionStorage.getItem('pw-last-current'); sessionStorage.setItem('pw-last-current', cur); } catch { /* storage blocked */ }
-    if (!last || last === cur) return;
+    const remember = () => { try { sessionStorage.setItem('pw-last-current', cur); } catch { /* storage blocked */ } };
+    try { last = sessionStorage.getItem('pw-last-current'); } catch { /* storage blocked */ }
+    if (!last || last === cur) return remember();
     const t = window.setTimeout(() => {
+      remember(); // only once the celebration actually plays
       const el = document.querySelector(`[data-node="${cur}"]`);
       if (!el) return;
       el.classList.add('just-unlocked');
@@ -266,6 +268,10 @@ export function PathwayPage() {
     }, 450);
     return () => window.clearTimeout(t);
   }, [view.current?.id]);
+
+  // Once a mastery wall has been crossed, keep it open even if mastery later decays.
+  const passedKey = view.newlyPassed.join(',');
+  useEffect(() => { markWallsPassed(view.newlyPassed); }, [passedKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Daily return + region introductions.
   useEffect(() => {

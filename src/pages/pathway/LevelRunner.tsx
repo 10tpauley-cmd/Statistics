@@ -83,10 +83,10 @@ function asLessonStep(seg: Segment): LessonStep | null {
 
 /* ---------------- Small segment components ---------------- */
 
-function McSegment({ seg, id, onScored }: { seg: Extract<Segment, { kind: 'mc' }>; id: string; onScored: (correct: boolean) => void }) {
-  const [picked, setPicked] = useState<string | null>(null);
+function McSegment({ seg, id, saved, onScored }: { seg: Extract<Segment, { kind: 'mc' }>; id: string; saved?: string; onScored: (correct: boolean, picked: string) => void }) {
+  const [picked, setPicked] = useState<string | null>(saved ?? null);
   const input = seg.input as Extract<InlineInput, { type: 'mc' }>;
-  const choose = (oid: string) => {
+  const choose = (oid: string, el: Element) => {
     if (picked) return;
     setPicked(oid);
     const o = input.options.find((x) => x.id === oid)!;
@@ -95,8 +95,8 @@ function McSegment({ seg, id, onScored }: { seg: Extract<Segment, { kind: 'mc' }
       question: { id: `enc:${id}`, generatorId: `enc-${id}`, concept: seg.concept, level: 3, type: 'conceptual', dims: ['recognize', 'interpret'], hints: [], prompt: seg.prompt },
       correct, hintsUsed: 0, ms: 15000, mode: 'pathway', misconception: o.misconception, yourAnswer: plain(o.text), correctAnswer: plain(input.options.find((x) => x.correct)?.text ?? ''), why: plain(seg.explain),
     });
-    if (correct) fx.correct(document.activeElement, {}); else fx.wrong(null);
-    onScored(correct);
+    if (correct) fx.correct(el, {}); else fx.wrong(null);
+    onScored(correct, oid);
   };
   return (
     <>
@@ -105,7 +105,7 @@ function McSegment({ seg, id, onScored }: { seg: Extract<Segment, { kind: 'mc' }
         {input.options.map((o, i) => {
           const cls = picked ? (o.correct ? 'correct' : picked === o.id ? 'wrong' : '') : '';
           return (
-            <button key={o.id} className={`option ${cls}`} disabled={!!picked} onClick={() => choose(o.id)}>
+            <button key={o.id} className={`option ${cls}`} disabled={!!picked} onClick={(e) => choose(o.id, e.currentTarget)}>
               <span className="letter">{String.fromCharCode(65 + i)}</span>
               <span style={{ flex: 1 }}><Rich text={o.text} as="span" />{picked && o.why && (o.correct || picked === o.id) && <span className="why">{plain(o.why)}</span>}</span>
             </button>
@@ -117,11 +117,11 @@ function McSegment({ seg, id, onScored }: { seg: Extract<Segment, { kind: 'mc' }
   );
 }
 
-function FormulaMatch({ formula, onScored }: { formula: string; onScored: (score: number) => void }) {
+function FormulaMatch({ formula, saved, onScored }: { formula: string; saved?: Record<string, string>; onScored: (score: number, picks: Record<string, string>) => void }) {
   const f = FORMULA_BY_ID[formula];
   const meanings = useMemo(() => f.symbols.map((s) => s.meaning).sort(() => Math.random() - 0.5), [f]);
-  const [picks, setPicks] = useState<Record<string, string>>({});
-  const [checked, setChecked] = useState(false);
+  const [picks, setPicks] = useState<Record<string, string>>(saved ?? {});
+  const [checked, setChecked] = useState(!!saved);
   const right = f.symbols.filter((s) => picks[s.sym] === s.meaning).length;
   return (
     <>
@@ -141,17 +141,18 @@ function FormulaMatch({ formula, onScored }: { formula: string; onScored: (score
         ))}
       </div>
       {!checked ? (
-        <button className="btn primary mt" disabled={Object.keys(picks).length < f.symbols.length} onClick={() => { setChecked(true); const sc = right / f.symbols.length; if (sc === 1) fx.correct(document.activeElement, {}); else fx.wrong(null); onScored(sc); }}>Restore the formula</button>
+        <button className="btn primary mt" disabled={Object.keys(picks).length < f.symbols.length} onClick={(e) => { setChecked(true); const sc = right / f.symbols.length; if (sc === 1) fx.correct(e.currentTarget, {}); else fx.wrong(null); onScored(sc, picks); }}>Restore the formula</button>
       ) : <div className={`feedback ${right === f.symbols.length ? 'good' : 'close'}`}><h4>{right} of {f.symbols.length} symbols restored</h4><Rich text={f.meaning} /></div>}
     </>
   );
 }
 
-function TeachSegment({ concept, onScored }: { concept: ConceptId; onScored: (score: number) => void }) {
+function TeachSegment({ concept, saved, onScored }: { concept: ConceptId; saved?: { text: string; res: FrqResult }; onScored: (score: number, done: { text: string; res: FrqResult }) => void }) {
   const c = CONCEPT_BY_ID[concept];
-  const [text, setText] = useState('');
+  const [text, setText] = useState(saved?.text ?? '');
   const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState<FrqResult | null>(null);
+  const [res, setRes] = useState<FrqResult | null>(saved?.res ?? null);
+  const boxRef = useRef<HTMLTextAreaElement>(null);
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
   const submit = async () => {
     setBusy(true);
@@ -159,14 +160,14 @@ function TeachSegment({ concept, onScored }: { concept: ConceptId; onScored: (sc
     setBusy(false);
     setRes(r);
     recordTeach(concept, text, r.feedback);
-    if (r.feedback.score >= 70) fx.correct(document.activeElement, { perfect: r.feedback.score >= 90 }); else fx.wrong(null);
-    onScored(r.feedback.score / 100);
+    if (r.feedback.score >= 70) fx.correct(boxRef.current, { perfect: r.feedback.score >= 90 }); else fx.wrong(null);
+    onScored(r.feedback.score / 100, { text, res: r });
   };
   return (
     <>
       <Rich text={c.teach.prompt} className="q-prompt" />
       <div className="row wrap" style={{ gap: 6 }}>{['Say what it **is**', 'Give an **example**', 'Explain **why** it matters', 'Name a **common mistake**'].map((t) => <span key={t} className="chip"><Rich text={t} as="span" /></span>)}</div>
-      <textarea className="textarea mt-sm" style={{ minHeight: 160 }} value={text} onChange={(e) => setText(e.target.value)} disabled={busy || !!res} placeholder="Explain it as if you were teaching a friend…" aria-label="Your explanation" />
+      <textarea ref={boxRef} className="textarea mt-sm" style={{ minHeight: 160 }} value={text} onChange={(e) => setText(e.target.value)} disabled={busy || !!res} placeholder="Explain it as if you were teaching a friend…" aria-label="Your explanation" />
       {!res && (
         <div className="row between mt-sm">
           <span className="tiny muted">{words} words{words < 15 ? ' · at least 15' : ''} · {aiAvailable() ? '✨ Claude will coach you' : 'checked offline against a rubric'}</span>
@@ -217,23 +218,45 @@ export function LevelRunner(props: RunnerProps) {
   const { kind, title, segments, theme, node } = props;
   const s = useLearner();
   const levelId = kind === 'level' && node ? node.id : undefined;
-  const saved = levelId ? s.pathway.levels[levelId]?.step ?? 0 : 0;
-  const [idx, setIdx] = useState(() => (saved > 0 && saved < segments.length - 1 ? saved : 0));
+  // Resume only when the saved run's score came along with it — otherwise start over so stars stay honest.
+  const [resume] = useState(() => {
+    const rec = levelId ? getState().pathway.levels[levelId] : undefined;
+    const step = rec?.step ?? 0;
+    return step > 0 && step < segments.length - 1 && rec?.run ? { step, run: rec.run } : null;
+  });
+  const [idx, setIdx] = useState(resume?.step ?? 0);
   const [steps, setSteps] = useState<Record<number, StepState>>({});
   const [questions, setQuestions] = useState<Record<number, Question>>({});
-  const [scoredSet, setScoredSet] = useState<Set<number>>(new Set());
-  const perf = useRef<LevelPerformance & { perConcept: Partial<Record<ConceptId, { score: number; n: number }>> }>({ graded: 0, score: 0, hints: 0, perConcept: {} });
+  const [scoredSet, setScoredSet] = useState<Set<number>>(() => new Set(resume?.run.scored ?? []));
+  // Answers to custom segments, kept so going Back shows them read-only instead of re-asking (and re-paying XP).
+  const [answers, setAnswers] = useState<Record<number, unknown>>({});
+  const perf = useRef<LevelPerformance & { perConcept: Partial<Record<ConceptId, { score: number; n: number }>> }>(
+    resume ? { graded: resume.run.graded, score: resume.run.score, hints: resume.run.hints, perConcept: { ...resume.run.perConcept } } : { graded: 0, score: 0, hints: 0, perConcept: {} });
+  const segRef = useRef<HTMLDivElement>(null);
   const [result, setResult] = useState<null | { stars: number; xp: number; acc: number; rec: ReturnType<typeof recommendAfterLevel>; firstTime: boolean }>(null);
   const seg = segments[idx];
   const concepts = useMemo(() => [...new Set(segments.flatMap((x) => (x.kind === 'intro' ? x.concepts : [])))], [segments]);
   const starEls = useRef<(HTMLSpanElement | null)[]>([]);
+  const cancelStars = useRef<() => void>(() => {});
 
   useEffect(() => {
     startSession('pathway', concepts);
     return () => { endSession(); };
   }, [concepts]);
   useEffect(() => { setTutorFocus({ page: `Pathway: ${title}`, concept: concepts[0] }); }, [title, concepts]);
-  useEffect(() => { if (levelId && seg.kind !== 'complete') savePathwayStep(levelId, idx); window.scrollTo({ top: 0, behavior: 'smooth' }); }, [idx, levelId, seg.kind]);
+  const persist = (at: number, scored: Set<number>) => {
+    if (!levelId) return;
+    const p = perf.current;
+    savePathwayStep(levelId, at, { graded: p.graded, score: p.score, hints: p.hints, perConcept: { ...p.perConcept }, scored: [...scored] });
+  };
+  useEffect(() => {
+    if (seg.kind !== 'complete') persist(idx, scoredSet);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Keep keyboard focus inside the new step (unless a field in it already took focus).
+    const el = segRef.current;
+    if (el && !el.contains(document.activeElement)) el.focus({ preventScroll: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx]);
 
   // Generate questions lazily (once per segment so going back doesn't reroll).
   useEffect(() => {
@@ -242,7 +265,8 @@ export function LevelRunner(props: RunnerProps) {
 
   const score = (i: number, value: number, concept: ConceptId | undefined, hints = 0) => {
     if (scoredSet.has(i)) return;
-    setScoredSet((x) => new Set(x).add(i));
+    const nextSet = new Set(scoredSet).add(i);
+    setScoredSet(nextSet);
     perf.current.graded += 1;
     perf.current.score += value;
     perf.current.hints += hints;
@@ -250,7 +274,9 @@ export function LevelRunner(props: RunnerProps) {
       const pc = perf.current.perConcept[concept] ?? { score: 0, n: 0 };
       perf.current.perConcept[concept] = { score: pc.score + value, n: pc.n + 1 };
     }
+    persist(idx, nextSet); // leaving right after answering can't erase (or redo) this result
   };
+  const keep = (i: number, v: unknown) => setAnswers((a) => ({ ...a, [i]: v }));
 
   // Finishing: stars, XP, lesson sync, encounter/review bookkeeping, recommendation.
   useEffect(() => {
@@ -261,16 +287,18 @@ export function LevelRunner(props: RunnerProps) {
     let xp = 0;
     let firstTime = false;
     segments.forEach((x) => { if (x.kind === 'lesson-step' && x.last) completeLesson(x.concept); });
-    if (kind === 'level' && levelId) { const r = completePathwayLevel(levelId, stars, acc); xp = r.xp; firstTime = r.firstTime; }
+    if (kind === 'level' && levelId) { const r = completePathwayLevel(levelId, stars, p.graded ? acc : null); xp = r.xp; firstTime = r.firstTime; }
     if (kind === 'encounter' && node) xp = completeEncounter(node.id);
     if (kind === 'review' && props.reviewConcept) noteQuickReview(props.reviewConcept);
     const rec = kind === 'level' ? recommendAfterLevel(getState(), p.perConcept) : null;
     setResult({ stars, xp, acc, rec, firstTime });
     fx.sound('complete');
     fx.celebrate('level');
-    window.setTimeout(() => fx.stars(starEls.current.filter(Boolean) as Element[], stars), 50);
+    const t = window.setTimeout(() => { cancelStars.current = fx.stars(starEls.current.filter(Boolean) as Element[], stars); }, 50);
+    cancelStars.current = () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seg.kind]);
+  useEffect(() => () => cancelStars.current(), []);
 
   const next = () => {
     if (seg.kind === 'lesson-step' && seg.step.kind === 'check') {
@@ -302,7 +330,7 @@ export function LevelRunner(props: RunnerProps) {
       </div>
       <div className="content narrow">
         <div className="pw-stage-label">{stageOf(seg)}</div>
-        <div className="card step-card pw-seg" key={idx}>
+        <div className="card step-card pw-seg" key={idx} ref={segRef} tabIndex={-1} aria-label={`${stageOf(seg)} — step ${idx + 1} of ${segments.length}`}>
           {seg.kind === 'intro' && (
             <div className="center stack">
               <div className="pw-intro-emoji">{typeMeta.emoji}</div>
@@ -328,8 +356,11 @@ export function LevelRunner(props: RunnerProps) {
             <StepBody step={lessonStep} concept={CONCEPT_BY_ID[seg.kind === 'lesson-step' ? seg.concept : seg.kind === 'recall' ? seg.concept : concepts[0]]}
               index={seg.kind === 'lesson-step' ? seg.index : -1} state={steps[idx] ?? {}} setState={(n) => setSteps((m) => ({ ...m, [idx]: n }))} />
           )}
+          {seg.kind === 'question' && questions[idx] && scoredSet.has(idx) && (
+            <div className="callout tiny" style={{ marginBottom: 10 }}>Already answered — this retry is practice only and won't change your stars or XP.</div>
+          )}
           {seg.kind === 'question' && questions[idx] && (
-            <QuestionCard key={questions[idx].id} question={questions[idx]} mode="pathway" scaffold={seg.scaffold && !!questions[idx].parts?.length} allowHints={seg.hints} compactHeader={false}
+            <QuestionCard key={questions[idx].id} question={questions[idx]} mode="pathway" record={!scoredSet.has(idx)} scaffold={seg.scaffold && !!questions[idx].parts?.length} allowHints={seg.hints} compactHeader={false}
               nextLabel={idx + 1 >= segments.length - 1 ? 'Finish level' : 'Continue'}
               onDone={(o: QuestionOutcome) => { score(idx, o.correct ? 1 : o.score, seg.plan.concept, o.hints); next(); }} />
           )}
@@ -345,9 +376,13 @@ export function LevelRunner(props: RunnerProps) {
               <p className="tiny muted mt-sm" style={{ marginBottom: 0 }}>Next: questions built to catch exactly these traps.</p>
             </>
           )}
-          {seg.kind === 'teach' && <TeachSegment concept={seg.concept} onScored={(v) => score(idx, v, seg.concept)} />}
-          {seg.kind === 'formula-match' && <FormulaMatch formula={seg.formula} onScored={(v) => score(idx, v, concepts[0])} />}
-          {seg.kind === 'mc' && <McSegment seg={seg} id={`${node?.id ?? 'x'}-${idx}`} onScored={(c) => score(idx, c ? 1 : 0, seg.concept)} />}
+          {(seg.kind === 'teach' || seg.kind === 'formula-match' || seg.kind === 'mc') && scoredSet.has(idx) && answers[idx] === undefined ? (
+            <div className="callout"><b>✓ Already answered.</b> You finished this step before you left — your result is saved. Continue on.</div>
+          ) : <>
+          {seg.kind === 'teach' && <TeachSegment concept={seg.concept} saved={answers[idx] as { text: string; res: FrqResult } | undefined} onScored={(v, d) => { keep(idx, d); score(idx, v, seg.concept); }} />}
+          {seg.kind === 'formula-match' && <FormulaMatch formula={seg.formula} saved={answers[idx] as Record<string, string> | undefined} onScored={(v, d) => { keep(idx, d); score(idx, v, concepts[0]); }} />}
+          {seg.kind === 'mc' && <McSegment seg={seg} id={`${node?.id ?? 'x'}-${idx}`} saved={answers[idx] as string | undefined} onScored={(c, d) => { keep(idx, d); score(idx, c ? 1 : 0, seg.concept); }} />}
+          </>}
           {seg.kind === 'complete' && result && (
             <div className="center stack">
               <div className="pw-complete-burst">🎉</div>

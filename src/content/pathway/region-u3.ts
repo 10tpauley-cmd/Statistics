@@ -100,8 +100,8 @@ export const REGION_U3: RegionContent = {
       },
       widget: {
         id: 'correlation', props: { mode: 'drag' },
-        mission: '1. Press **Make a curve** and read r. Is this relationship weak — or just not linear?\n2. Press **Reset points** and note r. Now drag a **single** point to a far corner of the plot and watch r change.\n3. Drag that point back into the cloud. How much did one point matter?',
-        takeaway: 'r measures only **linear** association: a perfect curve can score r ≈ 0. And r is easily moved by outliers — one far-off point can drag it up or down dramatically. Graph first, then compute r.',
+        mission: '1. Press **Make a curve** and read r. Keep **Show regression line** checked: what does a flat line say about this perfect pattern? Is the relationship weak — or just not linear?\n2. Drag only the **right-most point** of the curve up into the top-right corner. Watch r: one point moves it from 0 to roughly +0.45.\n3. Press **Reset points** for a roughly linear cloud and note r. Drag a single point to the corner that goes *against* the trend. How far can one point push r?',
+        takeaway: 'r measures only **linear** association: a perfect curve scores r ≈ 0, and its least-squares line is flat. And r is easily moved by outliers — moving one point of the curve dragged r from 0 to about +0.45. Graph first, then compute r.',
       },
       generators: ['co-match', 'co-interpret', 'sc-linear'],
       summary: [
@@ -115,7 +115,7 @@ export const REGION_U3: RegionContent = {
       intro: 'Today you\'ll interpret r in a complete sentence — strength, direction, and form, in context — and see why even r = .806 can\'t prove that one variable causes another.',
       hook: {
         title: 'A suspicious pair',
-        body: 'Exam #1 Review #9: over 11 years, longer winning Spelling Bee words went along with more deaths by spider bite, with **r = .806**.\n\nA strong correlation — between two things that have nothing to do with each other. How can that be?',
+        body: 'Exam #1 Review #9: in years when the winning Spelling Bee word had more letters, more people tended to die from spider bites — **r = .806**.\n\nA strong correlation — between two things that have nothing to do with each other. How can that be?',
         visual: { type: 'scatter', points: SPELLING_PTS, xLabel: 'Letters in winning word', yLabel: 'Spider-bite deaths' },
       },
       npc: { npc: 'vera', text: 'When someone shows me a strong r, my first question is: what else could make both of these rise together — or is it pure coincidence?' },
@@ -151,7 +151,7 @@ export const REGION_U3: RegionContent = {
     /* ---------- Least-squares regression line ---------- */
     {
       id: 'u3-reg-1', title: 'How Long Can You Dive?', type: 'lesson', concepts: ['regression'], lessonSteps: [0, 4],
-      intro: 'Today you\'ll fit a least-squares line by hand, learn what a, b, and $\\hat{y}$ mean in $\\hat{y} = a + bx$, and predict the maximum dive time at 115 feet.',
+      intro: 'Today you\'ll fit a line to the SCUBA data by eye, learn what a, b, and $\\hat{y}$ mean in $\\hat{y} = a + bx$, and predict the maximum dive time at 115 feet.',
       npc: { npc: 'thorne', text: 'Mind the hat on ŷ. It marks a *prediction*, not an observation — drop it and you claim to know something you only estimated.' },
       generators: ['rg-terms', 'rg-predict', 'rg-slope'],
       summary: [
@@ -172,7 +172,7 @@ export const REGION_U3: RegionContent = {
             { id: 'c', text: 'A negative number of deaths', correct: true, why: 'The line rises about 1.28 deaths per letter, so seven letters back from x = 7 it falls below zero.' },
           ],
         },
-        reveal: 'The intercept is $a = -5.4141$: for a 0-letter word, the line predicts **−5.4141 deaths** — impossible. The line isn\'t broken; x = 0 is simply far outside the 7–13-letter data, so this intercept has no real meaning (Exam #1 Review #9c).',
+        reveal: 'The intercept is $a = -5.4141$: for a 0-letter word, the line predicts **−5.4141 deaths** — impossible. The line isn\'t broken; x = 0 is simply far outside the 7–13-letter data, so this intercept has no real meaning. (Exam #1 Review #9c asks for this interpretation; #9h limits the model to words of 7 to 13 letters.)',
       },
       widget: {
         id: 'scatter-fit', props: { dataset: 'spelling' },
@@ -304,14 +304,13 @@ export const REGION_U3: RegionContent = {
         title: 'A classmate asks for help',
         body: 'Your study partner has the SCUBA line $\\hat{y} = 106.3421 - 0.8145x$ (depths 50–130 ft) and three questions: *What do the two numbers mean? How do I predict the dive time at 115 ft? And why won\'t you let me use it for 30 ft?*\n\nAnswer all three in one short paragraph.',
       },
-      npc: { npc: 'quill', text: 'If you can explain why 30 feet is off-limits, you understand regression — not just the formula.' },
     },
     {
       id: 'u3-challenge', title: 'Trial of the Tablet Batteries', type: 'challenge', concepts: ['residuals', 'r-squared', 'regression'],
       intro: 'Today you\'ll take on exam-level regression problems with no scaffolding — residual plots, r², and predictions — starting from the tablet battery study.',
       hook: {
         title: 'Can price predict battery life?',
-        body: 'Practice 12 #5: for a sample of **15 tablets**, technology gives $\\hat{y} = 4.67 + 0.0068x$ (x = price in dollars, y = battery life in hours) with **r² = 0.342**. The residual plot shows no predictable pattern; the tablet priced at $800 is overpredicted and the one at $875 is underpredicted.\n\nIs a line appropriate here? How much of the variation in battery life does price explain? Work it out without hints.',
+        body: 'Practice 12 #5: for a sample of **15 tablets**, technology gives $\\hat{y} = 4.67 + 0.0068x$ (x = price in dollars, y = battery life in hours) with **r² = 0.342**. The residual plot of the 15 tablets shows points scattered above and below zero with no curve or trend.\n\nIs a linear model appropriate? What does r² = 0.342 say about battery life — and what is r, *including its sign*? Work it out without hints.',
       },
       generators: ['re-plot', 're-models', 'r2-models', 'r2-interpret', 'rg-data', 'rg-slope'],
     },
@@ -347,8 +346,8 @@ export const REGION_U3: RegionContent = {
       id: 'u3-enc-yogurt', kind: 'lab', afterLevel: 'u3-resid-1', title: 'The Yogurt Anomaly', concepts: ['residuals', 'regression'],
       widget: {
         id: 'scatter-fit', props: { dataset: 'yogurt' },
-        mission: 'Example 2 plots protein (g) against calories for 10 brands of flavored yogurt. Fit your best line with the sliders and watch the orange squares: one brand — **9 g of protein, 310 calories** — owns a giant square. Then reveal the least-squares line and notice how that single point pulls it upward.',
-        takeaway: 'The 310-calorie yogurt sits far above the line, with a residual of roughly +156 calories (values read from the PDF plot): the line badly *under*predicts it. Least squares squares every miss, so one outlier like this drags the line toward itself — and the residual plot flags it instantly.',
+        mission: 'Example 2 plots protein (g) against calories for 10 brands of flavored yogurt. Fit your best line with the sliders and watch the orange squares: one brand — **9 g of protein, 310 calories** — owns a giant square. Then reveal the least-squares line: does it pass anywhere near that brand, or do the other nine points sit mostly *below* it?',
+        takeaway: 'The 310-calorie yogurt sits far above the line, with a residual of roughly +156 calories (values read from the PDF plot): the line badly *under*predicts it. Least squares squares every miss, so one outlier like this pulls the line up toward itself and leaves most of the other brands below it — which is why it stands alone near +150 on the residual plot in Example 2.',
       },
     },
     { id: 'u3-enc-treasure', kind: 'treasure', afterLevel: 'u3-recall', title: 'The Comet\'s Cache', concepts: ['r-squared', 'correlation'] },

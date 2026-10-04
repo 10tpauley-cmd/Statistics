@@ -57,8 +57,8 @@ export const REGION_U4: RegionContent = {
       id: 'u4-basics-2', title: 'The Long Run', type: 'lesson', concepts: ['prob-basics'], lessonSteps: [4, 7],
       intro: 'Today you\'ll watch experimental probability settle toward theoretical probability, then compute theoretical probabilities for one die and for two dice.',
       hook: {
-        title: 'Lab #3: does the long run listen?',
-        body: 'Experimental probability comes from running trials; theoretical probability comes from the sample space before anything happens. The course\'s handwritten note makes a bold promise: **as the number of trials increases, the experimental probability gets closer to the theoretical probability.**\n\nA fair coin\'s theoretical P(heads) is 0.5, and a fair die\'s P(six) is 1/6 ≈ 0.167. Time to test the promise — then compute theoretical probabilities for one die (Example 2) and two dice (Example 7).',
+        title: 'Does the long run listen?',
+        body: 'Experimental probability comes from running trials; theoretical probability comes from the sample space before anything happens. The packet makes a bold promise, the one Lab #3 explores: **as the number of trials increases, the experimental probability gets closer to the theoretical probability.**\n\nA fair coin\'s theoretical P(heads) is 0.5, and a fair die\'s P(six) is 1/6 ≈ 0.167. Time to test the promise — then compute theoretical probabilities for one die (Example 2) and two dice (Example 7).',
       },
       generators: ['pb-lln', 'pb-dice', 'pb-equally'],
     },
@@ -193,7 +193,7 @@ export const REGION_U4: RegionContent = {
       },
       widget: {
         id: 'contingency', props: { table: 'mothers' },
-        mission: '1. In **event** mode, click the **4+ children** row header: P(4+) = 66/300 = 0.22.\n2. Switch the toggle to **given** and click the **1976** column header. Does P(4+ | 1976) match 0.22?\n3. Give **2014** instead: P(4+ | 2014) = 13/100 = 0.13. Still not 0.22.\n4. Switch to the **superheroes** table. Set the event to **Spiderman** and give **10th**: compare 30/84 with 8/22.',
+        mission: '1. In **event** mode, click the **4+ children** row header: P(4+) = 66/300 = 0.22.\n2. Switch the toggle to **given** and click the **1976** column header. Does P(4+ | 1976) match 0.22?\n3. Give **2014** instead: P(4+ | 2014) = 13/100 = 0.13. Still not 0.22.\n4. Switch to the **superheroes** table. Set the toggle back to **event** and click **Spiderman**, then switch to **given** and click **10th**: compare P(Spiderman) = 30/84 with P(Spiderman | 10th) = 8/22.',
         takeaway: 'The independence test: compare **P(A)** with **P(A | B)**. Equal → independent; different → dependent. Here P(4+) = 0.22, but P(4+ | 1976) = 0.40 and P(4+ | 2014) = 0.13 — family size depends on the survey year. Even the superheroes\' 0.357 vs. 0.364 counts as dependent in this course.',
       },
       generators: ['in-check', 'in-identify', 'cd-table'],
@@ -215,7 +215,7 @@ export const REGION_U4: RegionContent = {
     {
       id: 'u4-indep-precision', title: 'Apart Is Not Independent', type: 'precision', concepts: ['independence'],
       intro: 'Today you\'ll defeat three independence traps: confusing *independent* with *mutually exclusive*, forgetting that draws without replacement change the odds, and adding probabilities for "at least one."',
-      npc: { npc: 'vera', text: '"They can\'t happen together" and "they don\'t affect each other" sound alike, but they\'re opposites in disguise: if one happens, the other becomes impossible.' },
+      npc: { npc: 'vera', text: '"They can\'t happen together" and "they don\'t affect each other" sound alike, but mutually exclusive events are actually *dependent*: if one happens, the other becomes impossible.' },
       hook: {
         title: 'The model-railroad switches',
         body: 'Practice #4: a circuit has **8** switches and **2** are defective. You test two switches, chosen at random **without replacement**.\n\nAfter one defective switch is pulled, only **1** defective remains among **7** switches: P(2nd defective | 1st defective) = **1/7 ≈ 0.143**, not 2/8 = 0.25. The first draw changed the second — the draws are **dependent**.',
@@ -271,8 +271,8 @@ export const REGION_U4: RegionContent = {
       },
       widget: {
         id: 'tree', props: { preset: 'flu' },
-        mission: '1. Start at the packet\'s values. Click the **P(Flu and Test +)** button to condition on a positive test and confirm P(Flu | Test +) ≈ 0.913.\n2. Drag **P(Flu)** down to **0.02**. Watch P(Test +) and P(Flu | Test +).\n3. Drag P(Flu) up to **0.50**. What happens to P(Flu | Test +) now?\n4. Return P(Flu) to 0.22 and slide **P(Test + | No flu)** — the false-positive rate — from 0.026 toward 0. Which slider moves the answer more?',
-        takeaway: 'P(flu | +) = (flu-and-positive path) ÷ (all positive paths). When the flu is rare, the healthy group is huge, so even a 2.6% false-positive rate produces many positives: P(flu | +) falls to ≈ 0.43 at 2% and rises to ≈ 0.974 at 50%. The test didn\'t change — the tree did.',
+        mission: '1. Start at the packet\'s values. Click the **P(Flu and Test +)** button to condition on a positive test and confirm P(Flu | Test +) ≈ 0.913.\n2. Drag **P(Flu)** down to **0.02**. Watch P(Test +) and P(Flu | Test +).\n3. Drag P(Flu) up to **0.50**. What happens to P(Flu | Test +) now?\n4. Return P(Flu) to 0.22 and drag **P(Test + | No flu)**, the false-positive rate, from 0.026 all the way down to 0. What does P(Flu | Test +) become, and why?',
+        takeaway: 'P(flu | +) = (flu-and-positive path) ÷ (all positive paths). When the flu is rare, the healthy group is huge, so even a 2.6% false-positive rate produces many positives: P(flu | +) falls to ≈ 0.43 at 2% and rises to ≈ 0.974 at 50%. With no false positives at all, every positive is a true positive and P(flu | +) = 1. The test didn\'t change — the tree did.',
       },
       generators: ['tv-concept', 'tv-reverse', 'cd-formula'],
       summary: [
@@ -325,7 +325,7 @@ export const REGION_U4: RegionContent = {
         title: 'You won a gold duck',
         body: 'Example 9, played to the end: roll a die; 1–4 → Pool #1 (8 red, 2 gold), 5–6 → Pool #2 (3 red, 7 gold).\n\n- P(gold) = (4/6)(2/10) + (2/6)(7/10) = **11/30 ≈ 0.367**.\n- You win a gold duck. P(it came from Pool #1) = (4/30) ÷ (11/30) = **4/11 ≈ 0.364** — even though Pool #1 is chosen 2/3 of the time.\n- "Gold" and "Pool #1" are **dependent**: P(gold | Pool #1) = 0.2 ≠ 0.367.\n\nThe problems ahead demand exactly these moves, on new scenarios, with no scaffolding.',
       },
-      generators: ['tv-reverse', 'tv-total', 'cd-medals', 'cd-formula', 'in-lane', 'in-vs-me', 'in-at-least'],
+      generators: ['tv-reverse', 'tv-total', 'cd-medals', 'cd-formula', 'in-vs-me', 'in-at-least'],
       summary: [
         'Total probability: add the products along every matching path.',
         'Reverse conditional: path ÷ total — it can be far from the branch label.',
@@ -407,7 +407,7 @@ export const REGION_U4: RegionContent = {
               prompt: 'On the Oddskeeper\'s tree, the branch from **Flu** to **Test −** is labeled **0.037**. Which probability is that?',
               answer: { kind: 'mc', options: [
                 { id: 'a', text: 'P(Test − | flu): the chance a patient with the flu tests negative', correct: true, why: 'Second-stage branches are conditional on the branch they grow from.' },
-                { id: 'b', text: 'P(flu | Test −): the chance a patient who tests negative has the flu', correct: false, why: 'That reverses the condition. P(flu | −) takes a division to find — it is about 0.011.', misconception: 'cond-reversed' },
+                { id: 'b', text: 'P(flu | Test −): the chance a patient who tests negative has the flu', correct: false, why: 'That reverses the condition. P(flu | −) is a reverse question: it is never a branch label, and you have to divide one path by a total to find it.', misconception: 'cond-reversed' },
                 { id: 'c', text: 'P(flu and Test −): the chance a patient has the flu and tests negative', correct: false, why: 'That is the whole path: 0.22 × 0.037 ≈ 0.0081.' },
               ] },
               explain: 'Branches after the first split are conditional probabilities: given the flu, 3.7% test negative (false negatives). Joint probabilities come from multiplying along a path.',
@@ -421,14 +421,14 @@ export const REGION_U4: RegionContent = {
               prompt: 'To find P(Test +), you will add two paths: flu-and-positive plus no-flu-and-positive. Which fact makes plain addition legitimate?',
               answer: { kind: 'mc', options: [
                 { id: 'a', text: 'A patient can\'t both have the flu and not have it, so the two paths are mutually exclusive', correct: true, why: 'Different paths never overlap, so the addition rule\'s P(A and B) term is 0.' },
-                { id: 'b', text: 'Having the flu and testing positive are independent', correct: false, why: 'They are strongly dependent — and independence isn\'t what the addition rule needs. It needs zero overlap.', misconception: 'indep-vs-mutex' },
+                { id: 'b', text: 'Having the flu and testing positive are independent', correct: false, why: 'Independence is a different question. Adding without subtracting needs zero overlap (mutually exclusive), not independence.', misconception: 'indep-vs-mutex' },
                 { id: 'c', text: '"Or" always means add', correct: false, why: 'Only when there is no overlap; otherwise subtract P(A and B).', misconception: 'or-double-count' },
               ] },
               explain: 'Paths on a tree are mutually exclusive, so P(path 1 or path 2) = P(path 1) + P(path 2) with nothing to subtract.',
               hint: 'What must be true about the overlap for plain addition to work?',
             },
           },
-          { kind: 'gen', concept: 'prob-rules', level: 5, excludeTypes: ['free-response'] },
+          { kind: 'gen', concept: 'prob-rules', generators: ['pr-mutex'], level: 5, excludeTypes: ['free-response'] },
         ],
       },
       {

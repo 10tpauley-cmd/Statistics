@@ -55,7 +55,8 @@ export function Celebrations() {
     left: Math.random() * 100, delay: Math.random() * 0.5, color: CONFETTI[i % CONFETTI.length], dur: 1.4 + Math.random() * 1.1, rot: Math.random() * 360,
   })) : []), [cur]);
   if (!cur) return null;
-  const reduced = getState().settings.reducedMotion || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const st = getState().settings;
+  const reduced = st.effects === 'off' || st.reducedMotion || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   return (
     <>
       {!reduced && (

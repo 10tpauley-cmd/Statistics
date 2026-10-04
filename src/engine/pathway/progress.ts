@@ -52,6 +52,8 @@ export interface PathwayView {
   current: MainNode | null;
   /** Region whose mastery wall is currently holding the journey back (all content done, mastery too low). */
   wall: { region: BuiltRegion; status: WallStatus } | null;
+  /** Walls that check out now but aren't recorded yet — persist them so later decay can't re-lock the road. */
+  newlyPassed: string[];
 }
 
 function allMastered(s: LearnerState, concepts: ConceptId[], now: number) {
@@ -63,13 +65,19 @@ export function computeView(s: LearnerState, p: Pathway, now = Date.now()): Path
   const states: Record<string, NodeState> = {};
   let current: MainNode | null = null;
   let wall: PathwayView['wall'] = null;
+  const newlyPassed: string[] = [];
+  const passed = s.pathway.wallsPassed ?? [];
   let open = true;
   let prevRegion = -1;
   for (const n of p.main) {
     if (n.regionIndex !== prevRegion) {
-      if (prevRegion >= 0 && open) {
-        const status = wallStatus(s, p.regions[prevRegion], now);
-        if (!status.ok) { open = false; wall = { region: p.regions[prevRegion], status }; }
+      const before = p.regions[prevRegion];
+      // A wall is checked until it's crossed once; progress already made beyond it also counts as crossed.
+      const crossed = before && (passed.includes(before.spec.id) || p.regions[n.regionIndex].main.some((m) => nodeDone(s, m)));
+      if (before && open && !crossed) {
+        const status = wallStatus(s, before, now);
+        if (!status.ok) { open = false; wall = { region: before, status }; }
+        else newlyPassed.push(before.spec.id);
       }
       prevRegion = n.regionIndex;
     }
@@ -88,7 +96,7 @@ export function computeView(s: LearnerState, p: Pathway, now = Date.now()): Path
       states[e.id] = s.pathway.encounters[e.id] ? 'completed' : anchor && nodeDone(s, anchor) ? 'available' : 'locked';
     }
   }
-  return { states, current, wall };
+  return { states, current, wall, newlyPassed };
 }
 
 /** Nodes you may open: anything not locked (completed nodes stay replayable). */

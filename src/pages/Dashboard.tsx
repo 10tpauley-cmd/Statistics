@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { PATHWAY } from '../content/pathway';
-import { computeView, journeyStats } from '../engine/pathway/progress';
+import { computeView, journeyStats, WALL_THRESHOLD } from '../engine/pathway/progress';
 import { LEVEL_TYPE_META } from '../engine/pathway/build';
 import { useLearner } from '../state/store';
 import { setName, skipPlacement } from '../state/actions';
@@ -298,7 +298,21 @@ export function Dashboard() {
 
 function PathwayPlanItem() {
   const s = useLearner();
-  const cur = useMemo(() => computeView(s, PATHWAY).current, [s]);
+  const view = useMemo(() => computeView(s, PATHWAY), [s]);
+  const cur = view.current;
+  if (!cur && view.wall) {
+    const weak = view.wall.status.weakest[0];
+    return (
+      <a className="plan-item" href={`#/pathway/review/${weak}`} style={{ borderColor: 'color-mix(in srgb, var(--warning) 45%, var(--border))' }}>
+        <span className="plan-num">🧱</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="bold small">The Pathway: break the mastery wall</div>
+          <div className="tiny muted">Quick review of {CONCEPT_BY_ID[weak].title} · {view.wall.region.spec.name} is at {Math.round(view.wall.status.mastery * 100)}% of the {Math.round(WALL_THRESHOLD * 100)}% needed.</div>
+        </div>
+        <span className="chip">3 min</span>
+      </a>
+    );
+  }
   if (!cur) return null;
   return (
     <a className="plan-item" href={`#/pathway/play/${cur.id}`} style={{ borderColor: 'color-mix(in srgb, var(--primary) 40%, var(--border))' }}>
@@ -317,15 +331,17 @@ function PathwayHero() {
   const view = useMemo(() => computeView(s, PATHWAY), [s]);
   const st = journeyStats(s, PATHWAY);
   const cur = view.current;
-  const region = PATHWAY.regions[cur ? cur.regionIndex : PATHWAY.regions.length - 1].spec;
-  const idx = cur ? PATHWAY.main.findIndex((n) => n.id === cur.id) : PATHWAY.main.length;
+  const regionIndex = cur ? cur.regionIndex : view.wall ? view.wall.region.index : PATHWAY.regions.length - 1;
+  const region = PATHWAY.regions[regionIndex].spec;
+  const wallAt = view.wall ? PATHWAY.main.indexOf(view.wall.region.main[view.wall.region.main.length - 1]) + 1 : PATHWAY.main.length;
+  const idx = cur ? PATHWAY.main.findIndex((n) => n.id === cur.id) : wallAt;
   const ahead = PATHWAY.main.slice(Math.max(0, idx - 2), idx + 5);
   const started = st.levelsDone > 0 || Object.keys(s.pathway.levels).length > 0;
   return (
     <div className="hero-card pw-dash-hero">
       <div className="eyebrow">🗺️ The Pathway · Region {region.number} — {region.name}</div>
       <h2>{cur ? (cur.kind === 'level' ? `Level ${cur.number}: ${cur.title}` : `${cur.kind === 'boss' ? 'Boss' : 'Mini-boss'}: ${cur.title}`) : s.pathway.completedAt ? 'Journey complete!' : 'Mastery wall ahead'}</h2>
-      <p style={{ margin: 0 }}>{cur?.kind === 'level' ? `${LEVEL_TYPE_META[cur.type].emoji} ${LEVEL_TYPE_META[cur.type].label} · ${LEVEL_TYPE_META[cur.type].blurb}` : cur ? 'A battle that tests everything before it.' : view.wall ? `Raise ${view.wall.region.spec.name} mastery to ${Math.round(0.5 * 100)}% to continue.` : 'You crossed every region.'}</p>
+      <p style={{ margin: 0 }}>{cur?.kind === 'level' ? `${LEVEL_TYPE_META[cur.type].emoji} ${LEVEL_TYPE_META[cur.type].label} · ${LEVEL_TYPE_META[cur.type].blurb}` : cur ? 'A battle that tests everything before it.' : view.wall ? `${view.wall.region.spec.name} mastery is ${Math.round(view.wall.status.mastery * 100)}% — reach ${Math.round(WALL_THRESHOLD * 100)}% to continue. A few quick reviews will do it.` : 'You crossed every region.'}</p>
       <div className="pw-dash-strip" aria-hidden="true">
         {ahead.map((n) => {
           const stt = view.states[n.id];
@@ -339,7 +355,8 @@ function PathwayHero() {
       </div>
       <Bar value={st.pct} className="white" label="Journey progress" />
       <div className="row wrap mt">
-        {cur ? <LinkBtn to={`/pathway/play/${cur.id}`} className="btn white"><Icon name="play" size={16} /> {started ? 'Continue Pathway' : 'Begin the Pathway'}</LinkBtn> : null}
+        {cur ? <LinkBtn to={`/pathway/play/${cur.id}`} className="btn white"><Icon name="play" size={16} /> {started ? 'Continue Pathway' : 'Begin the Pathway'}</LinkBtn>
+          : view.wall ? <LinkBtn to={`/pathway/review/${view.wall.status.weakest[0]}`} className="btn white"><Icon name="repeat" size={16} /> Review {CONCEPT_BY_ID[view.wall.status.weakest[0]].title}</LinkBtn> : null}
         <LinkBtn to="/pathway" className="btn ghost"><span style={{ color: '#fff' }}>Open the map</span></LinkBtn>
       </div>
     </div>

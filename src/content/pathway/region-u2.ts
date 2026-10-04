@@ -57,7 +57,7 @@ export const REGION_U2: RegionContent = {
       id: 'u2-stems', title: 'Stems and Leaves', type: 'lesson', concepts: ['quant-graphs'], lessonSteps: [0, 2],
       intro: 'Today you\'ll organize real data — Moneyball payrolls and Academy Award ages — into stem-and-leaf plots, a display that shows the shape *and* keeps every value.',
       npc: { npc: 'juno', text: 'Before we compute anything, let\'s *look*. A good display shows where the data pile up and where they thin out.' },
-      generators: ['qg-stem-read', 'qg-which-display'],
+      generators: ['qg-stem-read'],
       summary: [
         'Stem = every digit but the last; leaf = the last digit.',
         'List every stem in order — even empty ones — with the leaves in increasing order.',
@@ -65,8 +65,18 @@ export const REGION_U2: RegionContent = {
       ],
     },
     {
+      id: 'u2-histograms', title: 'Bars That Touch', type: 'lesson', concepts: ['quant-graphs'], lessonSteps: [3, 7],
+      intro: 'Today you\'ll trade individual values for intervals — dotplots, then histograms — and read counts and percents straight off the bars.',
+      hook: {
+        title: 'Thirty teams, one picture',
+        body: 'Stem plots and dotplots show every value — fine for 30 payrolls, hopeless for 3,000. So the course switches to a **histogram**: the 2003 payrolls grouped into $20 million intervals, with **13 teams** in the tallest bar ($40–60 million) and a lone bar out at $140–160 million.',
+        visual: HIST_2003,
+      },
+      generators: ['qg-hist-read', 'qg-which-display'],
+    },
+    {
       id: 'u2-stems-lab', title: 'Two Seasons, One Stem', type: 'graph-lab', concepts: ['quant-graphs'],
-      intro: 'Today you\'ll build the 2003 payroll stem plot value by value and set it beside 2002 — the side-by-side view the course uses for Moneyball.',
+      intro: 'Today you\'ll build the 2003 payroll stem plot value by value, set it beside 2002 — the side-by-side view the course uses for Moneyball — and see what a stem plot keeps that a histogram hides.',
       predict: {
         prompt: 'In the 2003 payroll stem plot (stems in tens of millions), which stem do you expect to hold the **most** leaves?',
         input: { type: 'mc', options: [
@@ -79,19 +89,9 @@ export const REGION_U2: RegionContent = {
       widget: {
         id: 'stemleaf', props: { dataset: 'payroll-2003' },
         mission: 'Press **Place next value** a few times to watch leaves drop onto their stems, then **Place all**. Find the lonely leaf far below the rest (15|3 = $153 million) and count the empty stems above it. Then switch the dataset to **MLB payroll 2002** and compare: where does each season pile up, and does 2002 have a value that far from the pack?',
-        takeaway: 'Both seasons pile up on the $40–50 million stems and thin out toward high payrolls — the shape shows up sideways. In 2003 the $153M payroll sits three empty stems past the next-highest ($117M), the kind of gap that makes you suspect an outlier; 2002\'s top payroll ($126M) sits much closer to the pack.',
+        takeaway: 'Both seasons pile up on the 4 and 5 stems ($40–59 million) and thin out toward high payrolls — the shape shows up sideways. In 2003 the $153M payroll sits three empty stems past the next-highest ($117M), the kind of gap that makes you suspect an outlier; 2002\'s top payroll ($126M) is only one empty stem past $108M. Unlike a histogram bar, the stem plot still tells you the exact value: 15|3 = $153 million.',
       },
       generators: ['qg-stem-read', 'qg-hist-read', 'qg-claim'],
-    },
-    {
-      id: 'u2-histograms', title: 'Bars That Touch', type: 'lesson', concepts: ['quant-graphs'], lessonSteps: [3, 7],
-      intro: 'Today you\'ll trade individual values for intervals — dotplots, then histograms — and read counts and percents straight off the bars.',
-      hook: {
-        title: 'Thirty teams, one picture',
-        body: 'A stem plot of 30 payrolls already feels crowded — imagine 3,000 values. So the course switches to a **histogram**: the 2003 payrolls grouped into $20 million intervals, with **13 teams** in the tallest bar ($40–60 million) and a lone bar out at $140–160 million.',
-        visual: HIST_2003,
-      },
-      generators: ['qg-hist-read', 'qg-which-display'],
     },
     {
       id: 'u2-center-1', title: 'Finding the Center', type: 'lesson', concepts: ['center'], lessonSteps: [0, 5],
@@ -185,7 +185,7 @@ export const REGION_U2: RegionContent = {
       generators: ['sh-identify', 'sh-context', 'sh-mean-median', 'ce-best'],
     },
     {
-      id: 'u2-position', title: 'The Speed Trap', type: 'lesson', concepts: ['position'], lessonSteps: [0, 7],
+      id: 'u2-position', title: 'Percentiles at the Speed Trap', type: 'lesson', concepts: ['position'], lessonSteps: [0, 7],
       intro: 'Today you\'ll describe where a value stands — percentiles, quartiles, and the five-number summary — finding the quartiles by hand with the same method Stapplet uses.',
       generators: ['po-percentile', 'po-quartile', 'po-interpret'],
     },
@@ -218,7 +218,7 @@ export const REGION_U2: RegionContent = {
       },
       widget: {
         id: 'boxplot-builder', props: { dataset: 'oj' },
-        mission: 'Step through all six stages for **Orange juice prices** and write down the five-number summary as it appears. At the last step, toggle **Modified boxplot** off and on: where does the right whisker end each time? Then switch to **Paint Brand A** and **Paint Brand B** and compare the widths of their boxes.',
+        mission: 'Step through all six stages for **Orange juice prices** and write down the five-number summary as it appears. At the last step, toggle **Modified boxplot** off and on: where does the right whisker end each time? Then switch to **Paint Brand A** and **Paint Brand B** (switching starts the steps over — step through to the boxplot again) and compare the widths of their boxes.',
         takeaway: 'OJ: 2.99, 3.59, 3.985, 4.29, 5.99, with fences at $2.54 and $5.34 — so $5.99 becomes a dot and the whisker stops at $4.89. Paint A\'s box (15 to 55 months) is four times as wide as Paint B\'s (30 to 40): the same median of 35 months, far more spread.',
       },
       generators: ['bx-percent', 'bx-compare', 'bx-parts', 'po-five', 'po-quartile'],
@@ -277,6 +277,15 @@ export const REGION_U2: RegionContent = {
       ],
     },
     {
+      id: 'u2-sd-2', title: 'Square, Sum, Divide, Root', type: 'lesson', concepts: ['std-dev'], lessonSteps: [4, 9],
+      intro: 'Today you\'ll compute a sample standard deviation by table — Paint Brand A, step by step — and interpret it in context.',
+      hook: {
+        title: 'Back to the paint lab',
+        body: 'Brand A (10, 60, 55, 22, 48, 15 months) and Brand B (35, 45, 30, 35, 40, 25 months) both average **35 months**. The range already said Brand A is more spread out. Now put an exact number on each brand\'s typical distance from 35.',
+      },
+      generators: ['sd-compute', 'sd-interpret'],
+    },
+    {
       id: 'u2-sd-exp', title: 'Stretch the Spread', type: 'experiment', concepts: ['std-dev', 'range-iqr'],
       intro: 'Today you\'ll stretch and squeeze Player B\'s games around their mean and watch how the deviations, their squares, and the standard deviation respond.',
       predict: {
@@ -296,21 +305,13 @@ export const REGION_U2: RegionContent = {
       generators: ['sd-compare', 'sd-compute', 'sd-decide', 'ri-branches', 'ri-compute'],
     },
     {
-      id: 'u2-sd-2', title: 'Square, Sum, Divide, Root', type: 'lesson', concepts: ['std-dev'], lessonSteps: [4, 9],
-      intro: 'Today you\'ll compute a sample standard deviation by table — Paint Brand A, step by step — and interpret it in context.',
-      hook: {
-        title: 'Back to the paint lab',
-        body: 'Brand A (10, 60, 55, 22, 48, 15 months) and Brand B (35, 45, 30, 35, 40, 25 months) both average **35 months**. The range already said Brand A is more spread out. Now put an exact number on each brand\'s typical distance from 35.',
-      },
-      generators: ['sd-compute', 'sd-interpret'],
-    },
-    {
       id: 'u2-sd-teach', title: 'Explain the Spread', type: 'teach', concepts: ['std-dev'],
       intro: 'Today you\'ll teach the standard deviation in your own words: what it measures, how it is built, and why we square and then take the square root.',
       hook: {
         title: 'A friend asks',
         body: 'Your friend sees "s = $0.68" on the orange-juice summary and asks: *"So every carton is exactly 68 cents away from the average price?"* Explain what the number really means — and how it was computed.',
       },
+      recall: [{ prompt: 'Paint Brand A has s ≈ 21.85 months and Brand B has s ≈ 7.07 months, and both average 35 months. Which brand is more consistent, and what does its SD mean?', answer: 'Brand B. On average, a can of Brand B lasts about 7.07 months away from the 35-month mean — its fading times cluster much more tightly than Brand A\'s.' }],
     },
     {
       id: 'u2-recall', title: 'Thorne\'s Formula Vault', type: 'recall', concepts: ['std-dev', 'range-iqr', 'position'],
@@ -333,7 +334,7 @@ export const REGION_U2: RegionContent = {
       generators: ['ri-compute', 'ri-branches', 'ri-resistant', 'sd-interpret', 'sd-decide', 'sd-compare', 'bx-compare', 'sh-context'],
     },
     {
-      id: 'u2-outliers-1', title: 'The Big Tasty', type: 'lesson', concepts: ['outliers'], lessonSteps: [0, 3],
+      id: 'u2-outliers-1', title: 'Fences for the Big Tasty', type: 'lesson', concepts: ['outliers'], lessonSteps: [0, 3],
       intro: 'Today you\'ll learn the course\'s two outlier rules — the 1.5 × IQR fences and the 2 SD rule — and put the 54-gram Big Tasty on trial.',
       npc: { npc: 'vera', text: '"Outlier" is a verdict, not a feeling. Show the fence, show the value, then decide.' },
       generators: ['ol-fence', 'ol-2sd', 'ol-terms'],
@@ -344,7 +345,7 @@ export const REGION_U2: RegionContent = {
       ],
     },
     {
-      id: 'u2-outliers-2', title: 'Trial by Fences', type: 'lesson', concepts: ['outliers'], lessonSteps: [4, 8],
+      id: 'u2-outliers-2', title: 'What an Outlier Distorts', type: 'lesson', concepts: ['outliers'], lessonSteps: [4, 8],
       intro: 'Today you\'ll drag an outlier around to see which statistics it distorts, then meet a case where the two outlier rules disagree.',
       hook: {
         title: 'Fritos on trial',
@@ -378,7 +379,7 @@ export const REGION_U2: RegionContent = {
       intro: 'Today you\'ll standardize values from different distributions, decide which ones are truly unusual, and connect the SD ruler to the 2 SD outlier rule.',
       hook: {
         title: 'Oakland, measured in SDs',
-        body: 'Oakland\'s payroll was $40M in 2002 (mean $67.433M, SD $24.804M) and $50M in 2003 (mean $71.067M, SD $27.903M).\n\n- 2002: (40 − 67.433)/24.804 ≈ **−1.11** SDs\n- 2003: (50 − 71.067)/27.903 ≈ **−0.76** SDs\n\nStill below average both years — but the raise moved Oakland closer to the league\'s center, measured on the SD ruler.',
+        body: 'Moneyball\'s Oakland A\'s spent $40M in 2002 (mean $67.433M, SD $24.804M) and, after a $10M raise, $50M in 2003 (mean $71.067M, SD $27.903M). (SDs as Stapplet reports them.)\n\n- 2002: (40 − 67.433)/24.804 ≈ **−1.11** SDs\n- 2003: (50 − 71.067)/27.903 ≈ **−0.76** SDs\n\nStill below average both years — but the raise moved Oakland closer to the league\'s center, measured on the SD ruler.',
       },
       generators: ['z-compute', 'z-compare', 'z-interpret', 'ol-2sd', 'ol-which'],
     },
@@ -468,11 +469,15 @@ export const REGION_U2: RegionContent = {
             kind: 'step', visual: HIST_2003,
             context: 'The course\'s histogram of the 2003 payrolls (p. 58).',
             step: {
-              concept: 'quant-graphs', dims: ['interpret', 'calculate'], label: 'Histogram',
-              prompt: 'The 2003 payroll histogram uses $20 million bars. The tallest bar, $40M up to $60M, holds **13** of the 30 teams. What **percent** of teams had payrolls in that interval?',
-              answer: { kind: 'numeric', value: (13 / 30) * 100, tol: 0.2, unit: '%', wrong: [{ value: 13, tol: 0.01, why: '13 is the count (frequency). Divide by the 30 teams to get the relative frequency.' }] },
-              explain: '13/30 ≈ 0.433 → **43.3%** of teams — nearly half the league — spent between $40M and $60M.',
-              hint: 'Relative frequency = count ÷ total number of teams.',
+              concept: 'quant-graphs', dims: ['recognize', 'interpret'], label: 'Histogram',
+              prompt: 'The Wyrm coils around the 2003 payroll histogram: $20 million bars holding 1, 13, 5, 5, 5, 0, and 1 teams from $20M up to $160M. Which reading of the graph is correct?',
+              answer: { kind: 'mc', options: [
+                { id: 'a', text: 'The tallest bar holds 13 of the 30 teams — about 43% spent $40M up to $60M', correct: true, why: 'Bar heights are counts: 13/30 ≈ 0.433, nearly half the league.' },
+                { id: 'b', text: 'Most teams spent $100M or more, because the bars stretch out to $160M', why: 'Only 6 of the 30 teams (5 + 0 + 1) are at $100M or more. How far the axis reaches says nothing about where the data pile up.' },
+                { id: 'c', text: 'The distribution is bimodal — the $140–160M bar is a second peak', why: 'That bar holds a single team. A lone bar after an empty gap marks a possible outlier, not a second peak.' },
+              ] },
+              explain: '13/30 ≈ **43.3%** of teams spent $40M up to $60M. From there the bars step down to the right, and one team sits alone at $140–160M — a long right tail.',
+              hint: 'Bar heights are counts of teams. Percent = count ÷ 30.',
             },
           },
           { kind: 'boss-step', boss: 'boss-u2', index: 0 },

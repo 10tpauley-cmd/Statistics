@@ -11,13 +11,14 @@ const COLS = 12;
 const ROWS = 12;
 const N_SQUARES = COLS * ROWS;
 const SAMPLE_N = 12;
-const ENTRANCE = 124; // the researcher's convenience starting square from the course example
+const ENTRANCE = 124;
+const SYSTEMATIC_STEP = 11; // the researcher's convenience starting square from the course example
 
 type Method = 'srs' | 'systematic' | 'stratified' | 'cluster' | 'convenience';
 
 const METHOD_INFO: Record<Method, { label: string; how: string }> = {
   srs: { label: 'Simple random', how: 'Every group of 12 squares is equally likely: number the squares 1–144 and use a random number generator to pick 12.' },
-  systematic: { label: 'Systematic', how: 'Pick a random start from 1–12, then take every 12th square after it.' },
+  systematic: { label: 'Systematic', how: 'Pick a random start from 1–11, then take every 11th square after it (12 squares in all).' },
   stratified: { label: 'Stratified', how: 'Split the park into strata (each row of the grid), then randomly pick one square from every row.' },
   cluster: { label: 'Cluster', how: 'Split the park into clusters (each column), randomly pick one cluster, and survey every square in it.' },
   convenience: { label: 'Convenience', how: 'Survey the 12 squares easiest to reach — the ones closest to the entrance at square #124.' },
@@ -62,8 +63,10 @@ function drawSample(method: Method, seed: number): number[] {
     case 'srs':
       return rng.sample(Array.from({ length: N_SQUARES }, (_, i) => i + 1), SAMPLE_N);
     case 'systematic': {
-      const start = rng.int(1, SAMPLE_N);
-      return Array.from({ length: SAMPLE_N }, (_, k) => start + k * SAMPLE_N);
+      // Interval 11 (not 12): with 12 columns, every 12th square would always fall in one column — a cluster sample in disguise.
+      const k = SYSTEMATIC_STEP;
+      const start = rng.int(1, k);
+      return Array.from({ length: SAMPLE_N }, (_, i) => start + i * k);
     }
     case 'stratified':
       return Array.from({ length: ROWS }, (_, r) => r * COLS + rng.int(1, COLS));

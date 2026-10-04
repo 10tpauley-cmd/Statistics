@@ -417,6 +417,16 @@ export interface PathwayLevelRecord {
   plays: number;
   completedAt?: number;
   step?: number; // resume point while in progress
+  run?: LevelRun; // scoring so far in the unfinished run (restored on resume)
+}
+
+/** Running score of an unfinished level, saved with the resume point. */
+export interface LevelRun {
+  graded: number;
+  score: number;
+  hints: number;
+  perConcept: Partial<Record<ConceptId, { score: number; n: number }>>;
+  scored: number[]; // segment indices already graded
 }
 
 export interface PathwayState {
@@ -427,6 +437,7 @@ export interface PathwayState {
   ceremonies: string[];
   lastVisit: string; // day key of the last Pathway visit
   quickReviews: Record<string, number>; // concept → last quick review time
+  wallsPassed: string[]; // regions whose mastery wall has been crossed (never re-locks after decay)
   completedAt?: number;
 }
 

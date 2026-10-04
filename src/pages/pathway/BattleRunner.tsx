@@ -9,7 +9,7 @@ import { taskCount } from '../../engine/pathway/build';
 import { getState, useLearner } from '../../state/store';
 import { setTutorFocus } from '../../state/tutor';
 import { endSession, startSession } from '../../state/actions';
-import { markCeremony, recordPathwayBattle, type BattleOutcome } from '../../state/pathway';
+import { markCeremony, markWallsPassed, recordPathwayBattle, type BattleOutcome } from '../../state/pathway';
 import { QuestionCard, type QuestionOutcome } from '../../components/question/QuestionCard';
 import { Rich } from '../../components/ui/Rich';
 import { Icon } from '../../components/ui/Icon';
@@ -95,7 +95,10 @@ export function BattleRunner({ node }: { node: MiniBossNode | BossNode }) {
       setOutcome(out);
       setStage('result');
       if (out.passed) { fx.sound('victory'); fx.celebrate(isBoss ? ((node as BossNode).final ? 'final' : 'unit') : 'boss'); }
-      if (out.passed && isBoss) markCeremony(node.id);
+      if (out.passed && isBoss) {
+        markCeremony(node.id);
+        if (wallStatus(getState(), region).ok) markWallsPassed([region.spec.id]); // decay later can't re-lock the road
+      }
       return;
     }
     setK(nk);

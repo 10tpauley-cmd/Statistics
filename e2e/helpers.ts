@@ -12,7 +12,12 @@ export async function freshLearner(page: Page, name = 'Sam') {
   await page.evaluate(() => localStorage.clear());
   await page.goto('/#/');
   await page.getByLabel('What should we call you? (optional)').fill(name);
-  await page.getByRole('button', { name: 'Start from lesson 1' }).click();
+  await page.getByRole('button', { name: 'Begin the Pathway' }).click();
+  await expect(page).toHaveURL(/#\/pathway$/);
+  await expect(page.getByRole('dialog', { name: /Entering/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Close' }).first().click();
+  // These flows exercise the classic lesson page; start from the first lesson.
+  await page.goto('/#/learn/pop-sample');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Population');
 }
 
@@ -74,7 +79,8 @@ export async function runLesson(page: Page) {
 }
 
 /** Play whatever Pathway level/review/encounter is on screen until its completion card. */
-export async function runPathwayLevel(page: Page) {
+export async function runPathwayLevel(page: Page, opts: { questions?: number } = {}) {
+  let answered = 0;
   for (let i = 0; i < 60; i++) {
     if (await page.getByRole('heading', { name: /^(Level complete!|Review complete!|Encounter cleared!)$/ }).count()) return;
     const seg = page.locator('.pw-seg');
@@ -83,6 +89,7 @@ export async function runPathwayLevel(page: Page) {
     if (await card.count()) {
       await answerQuestion(page);
       await card.getByRole('button', { name: /^(Continue|Finish level)/ }).click();
+      if (opts.questions && ++answered >= opts.questions) return;
       continue;
     }
     const lets = seg.getByRole('button', { name: "Let's go" });

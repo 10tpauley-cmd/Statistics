@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export function defaultPathway(): PathwayState {
-  return { levels: {}, battles: {}, encounters: {}, introsSeen: [], ceremonies: [], lastVisit: '', quickReviews: {} };
+  return { levels: {}, battles: {}, encounters: {}, introsSeen: [], ceremonies: [], lastVisit: '', quickReviews: {}, wallsPassed: [] };
 }
 
 export function defaultState(now = Date.now()): LearnerState {

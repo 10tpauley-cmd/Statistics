@@ -34,3 +34,29 @@ async function firstLevelId(page: import('@playwright/test').Page) {
   const id = await page.locator('.pw-node-wrap.kind-level').first().getAttribute('data-node');
   return id!;
 }
+
+test('leaving a level mid-way resumes at the same step with its score kept', async ({ page }) => {
+  await setup(page);
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+  await page.goto('/#/pathway');
+  await page.getByRole('button', { name: /Begin journey/ }).click();
+  await expect(page).toHaveURL(/#\/pathway\/play\//);
+  const playUrl = page.url();
+  await runPathwayLevel(page, { questions: 1 });
+  const where = await page.locator('.pw-segbar').getAttribute('aria-label');
+  await page.getByRole('button', { name: 'Back to the Pathway' }).click();
+  await expect(page.locator('.pw-node-wrap.state-in-progress')).toHaveCount(1);
+  await page.reload(); // flushes state to storage
+  const rec = await page.evaluate(() => {
+    const st = JSON.parse(localStorage.getItem('statlab.learner.v1') ?? '{}');
+    return Object.values(st.pathway.levels)[0] as { step: number; run?: { graded: number; scored: number[] } };
+  });
+  expect(rec.step).toBeGreaterThan(0);
+  expect(rec.run?.graded).toBeGreaterThanOrEqual(1);
+  expect(rec.run?.scored.length).toBeGreaterThanOrEqual(1);
+  await page.goto(playUrl);
+  await expect(page.locator('.pw-segbar')).toHaveAttribute('aria-label', where!);
+  await runPathwayLevel(page);
+  await expect(page.locator('.pw-big-stars')).toBeVisible();
+});
